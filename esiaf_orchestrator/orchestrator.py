@@ -166,7 +166,7 @@ class Orchestrator:
             node.actualTopicsOut = []
             for IN_topicinfo in node.allowedTopicsIn:
                 node.actualTopicsIn.append((IN_topicinfo.topic, best_format_per_topic[IN_topicinfo.topic]))
-            for OUT_topicinfo in node.actualTopicsOut:
+            for OUT_topicinfo in node.allowedTopicsOut:
                 node.actualTopicsOut.append((OUT_topicinfo.topic, best_format_per_topic[OUT_topicinfo.topic]))
 
             if old_actual_IN == node.actualTopicsIn and old_actual_OUT == node.actualTopicsOut:
