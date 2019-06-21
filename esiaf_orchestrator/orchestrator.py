@@ -3,16 +3,20 @@ import rosnode
 import rospy
 
 # esiaf imports
-from .node import Node
-from .AudioInfo import AudioFormat as AudioFormatInternal
 from esiaf_ros.msg import *
 from esiaf_ros.srv import *
+import pyesiaf
 
 # threading imports
 import threading
 import time
 import signal
 import sys
+
+# util imports
+from .node import Node
+from .AudioInfo import AudioFormat as AudioFormatInternal, AudioTopicInfo
+import utils
 
 
 class Orchestrator:
@@ -22,19 +26,19 @@ class Orchestrator:
     where resampling is necessary.
     """
 
-    active_nodes = []
-    active_nodes_lock = threading.Lock()
-    stopping_signal = False
-
-    registerService = None
 
     def __init__(self,
-                 remove_dead_rate=0.2
+                 remove_dead_rate=0.2,
+                 resampling_strategy='minimise_network_traffic'
                  ):
         """
         Will initialise an orchestrator according to the config file found under the given path.
         :param path_to_config: may be relative or absolute
         """
+        self.active_nodes = []
+        self.active_nodes_lock = threading.Lock()
+        self.resampling_strategy = resampling_strategy
+        self.stopping_signal = False
         self.registerService = rospy.Service('/esiaf_ros/orchestrator/register', RegisterNode, self.register_node)
 
         # define loop function for removing dead nodes and start a thread calling it every X seconds
@@ -102,6 +106,11 @@ class Orchestrator:
 
         return RegisterNodeResponse()
 
+    def best_format(self, input_formats, output_formats):
+        resampling_strategy_dict = {'minimise_network_traffic': utils.best_format_traffic_min,
+                                    'minimise_cpu_usage': utils.best_format_cpu_min}
+        return resampling_strategy_dict[self.resampling_strategy](input_formats, output_formats)
+
     def calculate_audio_tree(self):
         """
         Creates a new, optimized audio flow tree based on node preferences.
@@ -109,7 +118,61 @@ class Orchestrator:
         Assumes to already have the active_nodes_lock.
         :return: None
         """
-        self.calculate_audio_tree_naive()
+
+        def __add_entry(topic_name, node_input=None, node_output=None):
+            if topic_name not in topic_deps:
+                topic_deps[topic_name] = [[],[]]
+            if node_input:
+                topic_deps[topic_name][0].append(node_input)
+            if node_output:
+                topic_deps[topic_name][1].append(node_output)
+
+        def __get_format_per_topicname(allowedTopics, name):
+            for topic in allowedTopics:
+                #rospy.loginfo('allowedtopics has: ' + topic.topic)
+                if topic.topic == name:
+                    return topic.allowedFormat
+
+        topic_deps = {}
+
+        # populate topic dependency dict
+        for node in self.active_nodes:
+            for intopic in node.allowedTopicsIn:
+                __add_entry(intopic.topic, node_input=node)
+            for outtopic in node.allowedTopicsOut:
+                __add_entry(outtopic.topic, node_output=node)
+
+        rospy.loginfo('Topic deps is: ')
+        rospy.loginfo(str(topic_deps))
+
+        best_format_per_topic = {}
+
+        # aquire best format for use on each topic
+        for topic in topic_deps:
+            input_nodes, output_nodes = topic_deps[topic]
+            input_formats = [__get_format_per_topicname(node.allowedTopicsIn, topic) for node in input_nodes]
+            output_formats = [__get_format_per_topicname(node.allowedTopicsOut, topic) for node in output_nodes]
+
+            best_format_per_topic[topic] = self.best_format(input_formats, output_formats)
+
+        rospy.loginfo('best format per topic is: ')
+        rospy.loginfo(str(best_format_per_topic))
+
+        # set the best audio format for each node and topic
+        for node in self.active_nodes:
+            old_actual_IN = node.actualTopicsIn
+            node.actualTopicsIn = []
+            old_actual_OUT = node.actualTopicsOut
+            node.actualTopicsOut = []
+            for IN_topicinfo in node.allowedTopicsIn:
+                node.actualTopicsIn.append((IN_topicinfo.topic, best_format_per_topic[IN_topicinfo.topic]))
+            for OUT_topicinfo in node.actualTopicsOut:
+                node.actualTopicsOut.append((OUT_topicinfo.topic, best_format_per_topic[OUT_topicinfo.topic]))
+
+            if old_actual_IN == node.actualTopicsIn and old_actual_OUT == node.actualTopicsOut:
+                pass
+            else:
+                node.update_config()
 
     def check_for_new_data(self):
         """
@@ -124,26 +187,6 @@ class Orchestrator:
     ###
     ####################################################################################
 
-    def calculate_audio_tree_naive(self):
-        basic_format = AudioFormatInternal(AudioTopicFormatConstants.RATE_48000,
-                                           AudioTopicFormatConstants.BIT_INT_32_SIGNED,
-                                           1,
-                                           AudioTopicFormatConstants.LittleEndian)
-
-        for node in self.active_nodes:
-            rospy.loginfo("node in active nodes during calculation of audio tree \n" + str(node))
-            node.actualTopicsIn = []
-            node.actualTopicsOut = []
-            for intopic in node.allowedTopicsIn:
-                node.actualTopicsIn.append((intopic.topic, basic_format))
-            for outtopic in node.allowedTopicsOut:
-                node.actualTopicsOut.append((outtopic.topic, basic_format))
-
-            rospy.loginfo('audio tree calc actualtopics IN')
-            rospy.loginfo(str(node.actualTopicsIn))
-            rospy.loginfo('audio tree calc actualtopics OUT')
-            rospy.loginfo(str(node.actualTopicsOut))
-            node.update_config()
 
     def check_for_new_data_naive(self):
         """
