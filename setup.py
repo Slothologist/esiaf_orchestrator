@@ -10,6 +10,10 @@ setup_args = generate_distutils_setup(
     author='rfeldhans',
     author_email='rfeldh@gmail.com',
     license='---none---',
+    install_requires=[
+        'datetime',
+        'sqlite3'
+    ],
     packages=['esiaf_orchestrator']
 
 )

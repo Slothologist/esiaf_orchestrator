@@ -2,32 +2,166 @@
 import rospy
 
 # msg imports
-from esiaf_ros.msg import *
+from esiaf_ros.msg import AudioTopicFormatConstants as ATFC, VADInfo, SpeechInfo, SSLInfo, GenderInfo, EmotionInfo, \
+    VoiceIdInfo
+
+# db imports
+import sqlite3
+import datetime.datetime as dt
 
 
+def ros_time_to_sqlite_time(ros_time):
+    return dt.fromtimestamp(ros_time.to_sec())
 
 
 class SubMsgSubscriber:
     DESIGNATION_DICT = {
-        1: ('VAD', esiaf_ros.msg.VADInfo),
-        2: ('SpeechRec', esiaf_ros.msg.SpeechInfo),
-        3: ('SSL', esiaf_ros.msg.SSLInfo),
-        4: ('Gender', esiaf_ros.msg.GenderInfo),
-        5: ('Emotion', esiaf_ros.msg.EmotionInfo),
-        6: ('VoiceId', esiaf_ros.msg.VoiceIdInfo)
+        ATFC.VAD: ('VAD', VADInfo),
+        ATFC.SpeechRec: ('SpeechRec', SpeechInfo),
+        ATFC.SSL: ('SSL', SSLInfo),
+        ATFC.Gender: ('Gender', GenderInfo),
+        ATFC.Emotion: ('Emotion', EmotionInfo),
+        ATFC.VoiceId: ('VoiceId', VoiceIdInfo)
     }
-
-    subscriber = None
-
-    last_msgs = []
 
     def __init__(self,
                  name,
-                 designation):
-        if 0 < designation < 7:
+                 designation,
+                 db_path):
+        self.designation = designation
+        self.db_path = db_path
+        if designation in SubMsgSubscriber.DESIGNATION_DICT:
             self.subscriber = rospy.Subscriber(name + '/' + SubMsgSubscriber.DESIGNATION_DICT[designation][0],
-                                           SubMsgSubscriber.DESIGNATION_DICT[designation][1],
-                                           self.callback)
+                                               SubMsgSubscriber.DESIGNATION_DICT[designation][1],
+                                               self.callback)
 
     def callback(self, msg):
-        self.last_msgs.append(msg)
+        if self.designation == ATFC.VAD:
+            pass
+        elif self.designation == ATFC.SpeechRec:
+            self._write_speech_to_db(msg)
+        elif self.designation == ATFC.SSL:
+            self._write_ssl_to_db(msg)
+        elif self.designation == ATFC.Gender:
+            dict = {'gender': msg.gender,
+                    'probability': msg.probability,
+                    'from': ros_time_to_sqlite_time(msg.duration.start),
+                    'to': ros_time_to_sqlite_time(msg.duration.finish)}
+            self._simple_write_to_db(dict, 'gender')
+        elif self.designation == ATFC.Emotion:
+            dict = {'emotion': msg.gender,
+                    'probability': msg.probability,
+                    'from': ros_time_to_sqlite_time(msg.duration.start),
+                    'to': ros_time_to_sqlite_time(msg.duration.finish)}
+            self._simple_write_to_db(dict, 'emotion')
+        elif self.designation == ATFC.VoiceId:
+            dict = {'voiceID': msg.gender,
+                    'probability': msg.probability,
+                    'from': ros_time_to_sqlite_time(msg.duration.start),
+                    'to': ros_time_to_sqlite_time(msg.duration.finish)}
+            self._simple_write_to_db(dict, 'voiceID')
+
+    def _simple_write_to_db(self, object_dict, type):
+        sql_command = """
+              INSERT INTO {type} ({type}_key, {type}, probability, time_from, time_to)
+              VALUES 
+                    (NULL,
+                    {value}, 
+                    {prob}, 
+                    {time_from}, 
+                    {time_to});
+                    """.format(type=type,
+                               value=object_dict[type],
+                               prob=object_dict['probability'],
+                               time_from=object_dict['from'],
+                               time_to=object_dict['to']
+                               )
+
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+
+        cursor.execute(sql_command)
+
+        connection.commit()
+        connection.close()
+
+    def _write_speech_to_db(self, msg):
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+
+        # prepare main entry commands
+        speech_hypo_command = """
+        INSERT INTO speech_hypo (hypo_key, recognizedSpeech, probability)
+        VALUES 
+        (NULL, {recognizedSpeech}, {probability});
+        """
+        speech_command = """
+        INSERT INTO speech (speech_key, time_from, time_to)
+        VALUES (NONE, {time_from}, {time_to});
+        """
+
+        speech_combo_command = """
+        INSERT INTO speech_combo (combo_key, hypo_key, speech_key)
+        VALUES (NONE, {hypo}, {speech});
+        """
+
+        # write all hypothesis
+        hypo_ids = []
+        for hypo in msg.hypotheses:
+            cursor.execute(speech_hypo_command.format(recognizedSpeech=hypo.recognizedSpeech,
+                                                      probability=hypo.probability))
+            hypo_ids.append(cursor.lastrowid)
+
+        # write the main speech entry
+        cursor.execute(speech_command.format(time_from=ros_time_to_sqlite_time(msg.duration.start),
+                                             time_to=ros_time_to_sqlite_time(msg.duration.finish)))
+        speech_key = cursor.lastrowid
+
+        # write the compound entries
+        for hypo in hypo_ids:
+            cursor.execute(speech_combo_command.format(hypo=hypo, speech=speech_key))
+
+        connection.commit()
+        connection.close()
+
+    def _write_ssl_to_db(self, msg):
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+
+        # prepare main entry commands
+        ssl_dir_command = """
+        INSERT INTO ssl_dir (dir_key, sourceId, angleVertical, angleHorizontal, probability)
+        VALUES 
+        (NULL, {sourceId}, {angleVertical}, {angleHorizontal}, {probability});
+        """
+
+        ssl_command = """
+        INSERT INTO ssl (ssl_key, time_from, time_to)
+        VALUES (NULL, {time_from}, {time_to});
+        """
+
+        ssl_combo_command = """
+        INSERT INTO ssl_combo (combo_key, ssl_key, dir_key)
+        VALUES (NULL, {ssl}, {dir});
+        """
+
+        # write all directions
+        dir_ids = []
+        for dir in msg.directions:
+            cursor.execute(ssl_dir_command.format(sourceId=dir.sourceId,
+                                                  angleVertical=dir.angleVertical,
+                                                  angleHorizontal=dir.angleHorizontal,
+                                                  probability=dir.probability))
+            dir_ids.append(cursor.lastrowid)
+
+        # write the main ssl entry
+        cursor.execute(ssl_command.format(time_from=ros_time_to_sqlite_time(msg.duration.start),
+                                          time_to=ros_time_to_sqlite_time(msg.duration.finish)))
+        ssl_key = cursor.lastrowid
+
+        # write the compound entries
+        for dir in dir_ids:
+            cursor.execute(ssl_combo_command.format(ssl=ssl_key, dir_key=dir))
+
+        connection.commit()
+        connection.close()
