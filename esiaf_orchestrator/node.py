@@ -2,8 +2,8 @@
 import rospy
 
 # audio info imports
-from .AudioInfo import *
-from esiaf_ros.msg import ChangedConfig
+from .AudioInfo import AudioTopicInfo
+from esiaf_ros.msg import ChangedConfig, AudioTopicFormatConstants as ATFC
 from .SubMsgSubscriber import SubMsgSubscriber
 
 # util imports
@@ -12,13 +12,14 @@ from enum import Enum
 
 class Designation(Enum):
     """Enum that defines the available endian types"""
-    VAD = esiaf_msg.AudioTopicFormatConstants.VAD
-    SpeechRec = esiaf_msg.AudioTopicFormatConstants.SpeechRec
-    SSL = esiaf_msg.AudioTopicFormatConstants.SSL
-    Gender = esiaf_msg.AudioTopicFormatConstants.Gender
-    Emotion = esiaf_msg.AudioTopicFormatConstants.Emotion
-    VoiceId = esiaf_msg.AudioTopicFormatConstants.VoiceId
-    Other = esiaf_msg.AudioTopicFormatConstants.Other
+    VAD = ATFC.VAD
+    SpeechRec = ATFC.SpeechRec
+    SSL = ATFC.SSL
+    Gender = ATFC.Gender
+    Emotion = ATFC.Emotion
+    VoiceId = ATFC.VoiceId
+    Other = ATFC.Other
+
 
 class Node:
     """
@@ -65,14 +66,14 @@ class Node:
 
         config.inputTopics = []
         for topic in self.actualTopicsIn:
-            determinedConfig = esiaf_msg.AudioTopicInfo()
+            determinedConfig = esiaf_ros.msg.AudioTopicInfo()
             determinedConfig.topic = topic[0]
             determinedConfig.allowedFormat = topic[1].to_ros()
             config.inputTopics.append(determinedConfig)
 
         config.outputTopics = []
         for topic in self.actualTopicsOut:
-            determinedConfig = esiaf_msg.AudioTopicInfo()
+            determinedConfig = esiaf_ros.msg.AudioTopicInfo()
             determinedConfig.topic = topic[0]
             determinedConfig.allowedFormat = topic[1].to_ros()
             config.outputTopics.append(determinedConfig)
