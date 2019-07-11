@@ -28,6 +28,7 @@ class Orchestrator:
 
 
     def __init__(self,
+                 db_path,
                  remove_dead_rate=0.2,
                  resampling_strategy='minimise_network_traffic'
                  ):
@@ -38,6 +39,7 @@ class Orchestrator:
         self.active_nodes = []
         self.active_nodes_lock = threading.Lock()
         self.resampling_strategy = resampling_strategy
+        self.db_path = db_path
         self.stopping_signal = False
         self.registerService = rospy.Service('/esiaf_ros/orchestrator/register', RegisterNode, self.register_node)
 
@@ -97,7 +99,7 @@ class Orchestrator:
         :param nodeinfo: the ros message containing the registering node's information
         :return: 
         """
-        new_node = Node(nodeinfo)
+        new_node = Node(nodeinfo, self.db_path)
         rospy.loginfo('Registering new node: \n' + str(nodeinfo))
 
         with self.active_nodes_lock:

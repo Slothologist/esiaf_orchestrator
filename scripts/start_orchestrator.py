@@ -24,6 +24,7 @@ data = yaml.safe_load(open(path_to_config))
 # create the orchestrator
 rospy.loginfo('Creating Orchestrator...')
 orc = Orchestrator(
+    db_path=data['db_path'],
     remove_dead_rate=data['remove_dead_rate'],
     resampling_strategy=data['resampling_strategy']
 )

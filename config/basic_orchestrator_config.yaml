@@ -1,2 +1,3 @@
+db_path = sample.db
 remove_dead_rate: 0.2
 resampling_strategy : 'minimise_network_traffic'
