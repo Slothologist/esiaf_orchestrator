@@ -37,13 +37,13 @@ class SubMsgSubscriber:
                     'to': ros_time_to_sqlite_time(msg.duration.finish)}
             self._simple_write_to_db(dict, 'Gender')
         elif self.designation == ATFC.Emotion:
-            dict = {'Emotion': msg.gender,
+            dict = {'Emotion': msg.emotion,
                     'probability': msg.probability,
                     'from': ros_time_to_sqlite_time(msg.duration.start),
                     'to': ros_time_to_sqlite_time(msg.duration.finish)}
             self._simple_write_to_db(dict, 'Emotion')
         elif self.designation == ATFC.VoiceId:
-            dict = {'VoiceID': msg.gender,
+            dict = {'VoiceID': msg.voiceId,
                     'probability': msg.probability,
                     'from': ros_time_to_sqlite_time(msg.duration.start),
                     'to': ros_time_to_sqlite_time(msg.duration.finish)}
