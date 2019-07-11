@@ -78,12 +78,14 @@ def get_ssl_results(start_time, finish_time, path):
     ssl_results = {}
     for entry in result_raw:
         # add sslInfo if key not yet in dict
-        if entry[0] not in ssl_results:
-            ssl_results[entry[0]] = SSLInfo()
+        ssl_key = entry[0]
+        if ssl_key not in ssl_results:
+            ssl_results[ssl_key] = SSLInfo()
             time_stamp = RecordingTimeStamps()
             time_stamp.start = sqlite_time_to_ros_time(entry[1])
             time_stamp.finish = sqlite_time_to_ros_time(entry[2])
-            ssl_results[entry[0]].duration = time_stamp
+            ssl_results[ssl_key].duration = time_stamp
+            ssl_results[ssl_key].directions = []
 
         # add sslDir info to sslInfo
         sslDir = SSLDir()
@@ -91,6 +93,53 @@ def get_ssl_results(start_time, finish_time, path):
         sslDir.angleVertical = entry[4]
         sslDir.angleHorizontal = entry[5]
         sslDir.probability = entry[6]
-        ssl_results[entry[0]].directions.append(sslDir)
+        ssl_results[ssl_key].directions.append(sslDir)
 
     return [ssl_results[x] for x in ssl_results]
+
+
+def get_speech_rec_results(start_time, finish_time, path):
+    start_time_string = ros_time_to_sqlite_time(start_time)
+    finish_time_string = ros_time_to_sqlite_time(finish_time)
+
+    # query all elements of type in question
+    sql_query = """
+        SELECT speech_key, time_from, time_to, recognizedSpeech, probability FROM 
+        speech 
+        LEFT JOIN speech_combo ON speech.speech_key = speech_combo.speech_key
+        LEFT JOIN speech_hypo ON speech_hypo.hypo_key = speech_combo.hypo_key
+        WHERE 
+          time_from BETWEEN {time_from} AND {time_to}
+          OR
+          time_to BETWEEN {time_from} AND {time_to};
+        """.format(time_from=start_time_string, time_to=finish_time_string)
+
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+
+    cursor.execute(sql_query)
+    result_raw = cursor.fetchall()
+
+    connection.commit()
+    connection.close()
+
+    # recreate ros type instances
+    speech_results = {}
+    for entry in result_raw:
+        # add sslInfo if key not yet in dict
+        speech_key = entry[0]
+        if speech_key not in speech_results:
+            speech_results[speech_key] = SSLInfo()
+            time_stamp = RecordingTimeStamps()
+            time_stamp.start = sqlite_time_to_ros_time(entry[1])
+            time_stamp.finish = sqlite_time_to_ros_time(entry[2])
+            speech_results[speech_key].duration = time_stamp
+            speech_results[speech_key].hypotheses = []
+
+        # add sslDir info to sslInfo
+        speech_hyp = SpeechHypothesis()
+        speech_hyp.recognizedSpeech = entry[3]
+        speech_hyp.probability = entry[4]
+        speech_results[speech_key].hypotheses.append(speech_hyp)
+
+    return [speech_results[x] for x in speech_results]
