@@ -2,27 +2,15 @@
 import rospy
 
 # msg imports
-from esiaf_ros.msg import AudioTopicFormatConstants as ATFC, VADInfo, SpeechInfo, SSLInfo, GenderInfo, EmotionInfo, \
-    VoiceIdInfo
+from esiaf_ros.msg import AudioTopicFormatConstants as ATFC
+from db_utils import DESIGNATION_DICT
 
 # db imports
 import sqlite3
-import datetime.datetime as dt
-
-
-def ros_time_to_sqlite_time(ros_time):
-    return dt.fromtimestamp(ros_time.to_sec())
+from db_utils import ros_time_to_sqlite_time
 
 
 class SubMsgSubscriber:
-    DESIGNATION_DICT = {
-        ATFC.VAD: ('VAD', VADInfo),
-        ATFC.SpeechRec: ('SpeechRec', SpeechInfo),
-        ATFC.SSL: ('SSL', SSLInfo),
-        ATFC.Gender: ('Gender', GenderInfo),
-        ATFC.Emotion: ('Emotion', EmotionInfo),
-        ATFC.VoiceId: ('VoiceId', VoiceIdInfo)
-    }
 
     def __init__(self,
                  name,
@@ -30,9 +18,9 @@ class SubMsgSubscriber:
                  db_path):
         self.designation = designation
         self.db_path = db_path
-        if designation in SubMsgSubscriber.DESIGNATION_DICT:
-            self.subscriber = rospy.Subscriber(name + '/' + SubMsgSubscriber.DESIGNATION_DICT[designation][0],
-                                               SubMsgSubscriber.DESIGNATION_DICT[designation][1],
+        if designation in DESIGNATION_DICT:
+            self.subscriber = rospy.Subscriber(name + '/' + DESIGNATION_DICT[designation][0],
+                                               DESIGNATION_DICT[designation][1],
                                                self.callback)
 
     def callback(self, msg):
@@ -43,23 +31,23 @@ class SubMsgSubscriber:
         elif self.designation == ATFC.SSL:
             self._write_ssl_to_db(msg)
         elif self.designation == ATFC.Gender:
-            dict = {'gender': msg.gender,
+            dict = {'Gender': msg.gender,
                     'probability': msg.probability,
                     'from': ros_time_to_sqlite_time(msg.duration.start),
                     'to': ros_time_to_sqlite_time(msg.duration.finish)}
-            self._simple_write_to_db(dict, 'gender')
+            self._simple_write_to_db(dict, 'Gender')
         elif self.designation == ATFC.Emotion:
-            dict = {'emotion': msg.gender,
+            dict = {'Emotion': msg.gender,
                     'probability': msg.probability,
                     'from': ros_time_to_sqlite_time(msg.duration.start),
                     'to': ros_time_to_sqlite_time(msg.duration.finish)}
-            self._simple_write_to_db(dict, 'emotion')
+            self._simple_write_to_db(dict, 'Emotion')
         elif self.designation == ATFC.VoiceId:
-            dict = {'voiceID': msg.gender,
+            dict = {'VoiceID': msg.gender,
                     'probability': msg.probability,
                     'from': ros_time_to_sqlite_time(msg.duration.start),
                     'to': ros_time_to_sqlite_time(msg.duration.finish)}
-            self._simple_write_to_db(dict, 'voiceID')
+            self._simple_write_to_db(dict, 'VoiceID')
 
     def _simple_write_to_db(self, object_dict, type):
         sql_command = """

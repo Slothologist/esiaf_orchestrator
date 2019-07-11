@@ -1,5 +1,32 @@
 import os
 import sqlite3
+import datetime.datetime as dt
+import time
+
+from esiaf_ros.msg import AudioTopicFormatConstants as ATFC, VADInfo, SpeechInfo, SSLInfo, GenderInfo, EmotionInfo, \
+    VoiceIdInfo
+import rospy
+
+
+DESIGNATION_DICT = {
+    ATFC.VAD: ('VAD', VADInfo),
+    ATFC.SpeechRec: ('SpeechRec', SpeechInfo),
+    ATFC.SSL: ('SSL', SSLInfo),
+    ATFC.Gender: ('Gender', GenderInfo),
+    ATFC.Emotion: ('Emotion', EmotionInfo),
+    ATFC.VoiceId: ('VoiceId', VoiceIdInfo)
+}
+
+
+def ros_time_to_sqlite_time(ros_time):
+    return dt.fromtimestamp(ros_time.to_sec())
+
+
+def sqlite_time_to_ros_time(sql_time):
+    date_time = dt.strptime(sql_time, "%Y-%m-%d %H:%M:%S.%f")
+    time_time = time.mktime(date_time.timetuple() + date_time.microseconds/1e6)
+    ros_time = rospy.Time(time_time)
+    return ros_time
 
 
 def create_db(path):
@@ -42,27 +69,27 @@ def _table_creation(cursor):
 
 
     create_emotion = """
-    CREATE TABLE emotion ( 
-    emotion_key INTEGER PRIMARY KEY,
-    emotion VARCHAR(20),
+    CREATE TABLE Emotion ( 
+    Emotion_key INTEGER PRIMARY KEY,
+    Emotion VARCHAR(20),
     probability REAL,
     time_from TEXT,
     time_to TEXT);"""
 
 
     create_gender = """
-    CREATE TABLE gender ( 
-    gender_key INTEGER PRIMARY KEY,
-    gender VARCHAR(20),
+    CREATE TABLE Gender ( 
+    Gender_key INTEGER PRIMARY KEY,
+    Gender VARCHAR(20),
     probability REAL,
     time_from TEXT,
     time_to TEXT);"""
 
 
     create_voiceID = """
-    CREATE TABLE voideID ( 
-    voiceID_key INTEGER PRIMARY KEY,
-    voideID VARCHAR(20),
+    CREATE TABLE VoideID ( 
+    VoiceID_key INTEGER PRIMARY KEY,
+    VoideID VARCHAR(20),
     probability REAL,
     time_from TEXT,
     time_to TEXT);"""
