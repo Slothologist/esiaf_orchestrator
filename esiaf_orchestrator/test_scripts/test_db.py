@@ -1,5 +1,5 @@
-from db_utils import create_db, DESIGNATION_DICT, sqlite_time_to_ros_time, ros_time_to_sqlite_time
-from SubMsgSubscriber import SubMsgSubscriber
+from esiaf_orchestrator.db_utils import create_db, sqlite_time_to_ros_time, ros_time_to_sqlite_time
+from esiaf_orchestrator.SubMsgSubscriber import SubMsgSubscriber
 import datetime
 from esiaf_ros.msg import SSLInfo, SSLDir, SpeechInfo, SpeechHypothesis, RecordingTimeStamps, GenderInfo, EmotionInfo, \
     VoiceIdInfo
