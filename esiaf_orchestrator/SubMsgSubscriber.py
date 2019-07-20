@@ -54,10 +54,10 @@ class SubMsgSubscriber:
               INSERT INTO {type} ({type}_key, {type}, probability, time_from, time_to)
               VALUES 
                     (NULL,
-                    {value}, 
-                    {prob}, 
-                    {time_from}, 
-                    {time_to});
+                    "{value}", 
+                    "{prob}", 
+                    "{time_from}", 
+                    "{time_to}");
                     """.format(type=type,
                                value=object_dict[type],
                                prob=object_dict['probability'],

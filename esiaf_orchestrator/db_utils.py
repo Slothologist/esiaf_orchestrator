@@ -1,6 +1,6 @@
 import os
 import sqlite3
-import datetime.datetime as dt
+from datetime import datetime as dt
 import time
 
 from esiaf_ros.msg import AudioTopicFormatConstants as ATFC, VADInfo, SpeechInfo, SSLInfo, GenderInfo, EmotionInfo, \
@@ -24,7 +24,7 @@ def ros_time_to_sqlite_time(ros_time):
 
 def sqlite_time_to_ros_time(sql_time):
     date_time = dt.strptime(sql_time, "%Y-%m-%d %H:%M:%S.%f")
-    time_time = time.mktime(date_time.timetuple() + date_time.microseconds/1e6)
+    time_time = time.mktime(date_time.timetuple()) + date_time.microsecond/1e6
     ros_time = rospy.Time(time_time)
     return ros_time
 
@@ -87,9 +87,9 @@ def _table_creation(cursor):
 
 
     create_voiceID = """
-    CREATE TABLE VoideID ( 
+    CREATE TABLE VoiceID ( 
     VoiceID_key INTEGER PRIMARY KEY,
-    VoideID VARCHAR(20),
+    VoiceID VARCHAR(20),
     probability REAL,
     time_from TEXT,
     time_to TEXT);"""
