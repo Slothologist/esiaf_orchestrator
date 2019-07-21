@@ -56,7 +56,7 @@ def get_ssl_results(start_time, finish_time, path):
 
     # query all elements of type in question
     sql_query = """
-    SELECT ssl_key, time_from, time_to, sourceId, angleVertical, angleHorizontal, probability FROM 
+    SELECT ssl.ssl_key, time_from, time_to, sourceId, angleVertical, angleHorizontal, probability FROM 
     ssl 
     LEFT JOIN ssl_combo ON ssl.ssl_key = ssl_combo.ssl_key
     LEFT JOIN ssl_dir ON ssl_dir.dir_key = ssl_combo.dir_key
@@ -105,14 +105,14 @@ def get_speech_rec_results(start_time, finish_time, path):
 
     # query all elements of type in question
     sql_query = """
-        SELECT speech_key, time_from, time_to, recognizedSpeech, probability FROM 
+        SELECT speech.speech_key, time_from, time_to, recognizedSpeech, probability FROM 
         speech 
         LEFT JOIN speech_combo ON speech.speech_key = speech_combo.speech_key
         LEFT JOIN speech_hypo ON speech_hypo.hypo_key = speech_combo.hypo_key
         WHERE 
-          time_from BETWEEN {time_from} AND {time_to}
+          time_from BETWEEN "{time_from}" AND "{time_to}"
           OR
-          time_to BETWEEN {time_from} AND {time_to};
+          time_to BETWEEN "{time_from}" AND "{time_to}";
         """.format(time_from=start_time_string, time_to=finish_time_string)
 
     connection = sqlite3.connect(path)
@@ -127,17 +127,17 @@ def get_speech_rec_results(start_time, finish_time, path):
     # recreate ros type instances
     speech_results = {}
     for entry in result_raw:
-        # add sslInfo if key not yet in dict
+        # add SpeechInfo if key not yet in dict
         speech_key = entry[0]
         if speech_key not in speech_results:
-            speech_results[speech_key] = SSLInfo()
+            speech_results[speech_key] = SpeechInfo()
             time_stamp = RecordingTimeStamps()
             time_stamp.start = sqlite_time_to_ros_time(entry[1])
             time_stamp.finish = sqlite_time_to_ros_time(entry[2])
             speech_results[speech_key].duration = time_stamp
             speech_results[speech_key].hypotheses = []
 
-        # add sslDir info to sslInfo
+        # add speech hypothesis info to SpeechInfo
         speech_hyp = SpeechHypothesis()
         speech_hyp.recognizedSpeech = entry[3]
         speech_hyp.probability = entry[4]

@@ -3,7 +3,7 @@ from esiaf_orchestrator.SubMsgSubscriber import SubMsgSubscriber
 import datetime
 from esiaf_ros.msg import SSLInfo, SSLDir, SpeechInfo, SpeechHypothesis, RecordingTimeStamps, GenderInfo, EmotionInfo, \
     VoiceIdInfo
-from esiaf_orchestrator.db_retrieval import get_basic_results
+from esiaf_orchestrator.db_retrieval import get_basic_results, get_speech_rec_results
 
 # setup stuff
 
@@ -36,10 +36,19 @@ voice_msg.voiceId = '15'
 voice_msg.probability = 0.7
 voice_msg.duration = time_stamps
 
+speech_msg = SpeechInfo()
+speech_msg.duration = time_stamps
+speech_msg.hypotheses = []
+speech_msg.hypotheses.append(SpeechHypothesis())
+speech_msg.hypotheses[0].recognizedSpeech = 'hello robot'
+speech_msg.hypotheses[0].probability = 0.6
+
 subscriber = SubMsgSubscriber('bla', 'blubb', db_path)
 
 
 ################### test stuff
+
+#### basic stuff test
 
 # gender test write
 msg = gender_msg
@@ -76,4 +85,13 @@ subscriber._simple_write_to_db(dict, 'voiceId')
 # voiceId test read
 retrieved = get_basic_results('voiceId', time_one, time_two, db_path)
 assert retrieved[0] == msg
+
+
+#### speech tests
+
+# write
+subscriber._write_speech_to_db(speech_msg)
+
+# read
+retrieved = get_speech_rec_results(time_one, time_two, db_path)
 

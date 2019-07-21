@@ -81,16 +81,16 @@ class SubMsgSubscriber:
         speech_hypo_command = """
         INSERT INTO speech_hypo (hypo_key, recognizedSpeech, probability)
         VALUES 
-        (NULL, {recognizedSpeech}, {probability});
+        (NULL, "{recognizedSpeech}", "{probability}");
         """
         speech_command = """
         INSERT INTO speech (speech_key, time_from, time_to)
-        VALUES (NONE, {time_from}, {time_to});
+        VALUES (NULL, "{time_from}", "{time_to}");
         """
 
         speech_combo_command = """
         INSERT INTO speech_combo (combo_key, hypo_key, speech_key)
-        VALUES (NONE, {hypo}, {speech});
+        VALUES (NULL, "{hypo}", "{speech}");
         """
 
         # write all hypothesis
