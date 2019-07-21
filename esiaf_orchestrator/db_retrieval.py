@@ -15,9 +15,9 @@ def get_basic_results(type_name, start_time, finish_time, path):
     sql_query = """
     SELECT {type}, probability, time_from, time_to FROM {type}
     WHERE 
-      time_from BETWEEN {time_from} AND {time_to}
+      time_from BETWEEN "{time_from}" AND "{time_to}"
       OR
-      time_to BETWEEN {time_from} AND {time_to};
+      time_to BETWEEN "{time_from}" AND "{time_to}";
     """.format(type=type_name, time_from=start_time_string, time_to=finish_time_string)
 
     connection = sqlite3.connect(path)
@@ -42,8 +42,9 @@ def get_basic_results(type_name, start_time, finish_time, path):
         type_instance = type_class()
         setattr(type_instance, type_name, instance[0])
         type_instance.probability = instance[1]
-        type_instance.time_from = sqlite_time_to_ros_time(instance[2])
-        type_instance.time_to = sqlite_time_to_ros_time(instance[3])
+        type_instance.duration = RecordingTimeStamps()
+        type_instance.duration.start = sqlite_time_to_ros_time(instance[2])
+        type_instance.duration.finish = sqlite_time_to_ros_time(instance[3])
         ros_type_list.append(type_instance)
 
     return ros_type_list

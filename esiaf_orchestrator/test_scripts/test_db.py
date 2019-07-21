@@ -3,6 +3,7 @@ from esiaf_orchestrator.SubMsgSubscriber import SubMsgSubscriber
 import datetime
 from esiaf_ros.msg import SSLInfo, SSLDir, SpeechInfo, SpeechHypothesis, RecordingTimeStamps, GenderInfo, EmotionInfo, \
     VoiceIdInfo
+from esiaf_orchestrator.db_retrieval import get_basic_results
 
 # setup stuff
 
@@ -42,24 +43,37 @@ subscriber = SubMsgSubscriber('bla', 'blubb', db_path)
 
 # gender test write
 msg = gender_msg
-dict = {'Gender': msg.gender,
+dict = {'gender': msg.gender,
         'probability': msg.probability,
         'from': ros_time_to_sqlite_time(msg.duration.start),
         'to': ros_time_to_sqlite_time(msg.duration.finish)}
-subscriber._simple_write_to_db(dict, 'Gender')
+subscriber._simple_write_to_db(dict, 'gender')
+
+# gender test read
+retrieved = get_basic_results('gender', time_one, time_two, db_path)
+assert retrieved[0] == msg
 
 # emotion test write
 msg = emotion_msg
-dict = {'Emotion': msg.emotion,
+dict = {'emotion': msg.emotion,
         'probability': msg.probability,
         'from': ros_time_to_sqlite_time(msg.duration.start),
         'to': ros_time_to_sqlite_time(msg.duration.finish)}
-subscriber._simple_write_to_db(dict, 'Emotion')
+subscriber._simple_write_to_db(dict, 'emotion')
+
+# emotion test read
+retrieved = get_basic_results('emotion', time_one, time_two, db_path)
+assert retrieved[0] == msg
 
 # voiceId test write
 msg = voice_msg
-dict = {'VoiceID': msg.voiceId,
+dict = {'voiceId': msg.voiceId,
         'probability': msg.probability,
         'from': ros_time_to_sqlite_time(msg.duration.start),
         'to': ros_time_to_sqlite_time(msg.duration.finish)}
-subscriber._simple_write_to_db(dict, 'VoiceID')
+subscriber._simple_write_to_db(dict, 'voiceId')
+
+# voiceId test read
+retrieved = get_basic_results('voiceId', time_one, time_two, db_path)
+assert retrieved[0] == msg
+

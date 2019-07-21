@@ -31,23 +31,23 @@ class SubMsgSubscriber:
         elif self.designation == ATFC.SSL:
             self._write_ssl_to_db(msg)
         elif self.designation == ATFC.Gender:
-            dict = {'Gender': msg.gender,
+            dict = {'gender': msg.gender,
                     'probability': msg.probability,
                     'from': ros_time_to_sqlite_time(msg.duration.start),
                     'to': ros_time_to_sqlite_time(msg.duration.finish)}
-            self._simple_write_to_db(dict, 'Gender')
+            self._simple_write_to_db(dict, 'gender')
         elif self.designation == ATFC.Emotion:
-            dict = {'Emotion': msg.emotion,
+            dict = {'emotion': msg.emotion,
                     'probability': msg.probability,
                     'from': ros_time_to_sqlite_time(msg.duration.start),
                     'to': ros_time_to_sqlite_time(msg.duration.finish)}
-            self._simple_write_to_db(dict, 'Emotion')
+            self._simple_write_to_db(dict, 'emotion')
         elif self.designation == ATFC.VoiceId:
-            dict = {'VoiceID': msg.voiceId,
+            dict = {'voiceId': msg.voiceId,
                     'probability': msg.probability,
                     'from': ros_time_to_sqlite_time(msg.duration.start),
                     'to': ros_time_to_sqlite_time(msg.duration.finish)}
-            self._simple_write_to_db(dict, 'VoiceID')
+            self._simple_write_to_db(dict, 'voiceId')
 
     def _simple_write_to_db(self, object_dict, type):
         sql_command = """

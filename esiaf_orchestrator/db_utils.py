@@ -12,9 +12,9 @@ DESIGNATION_DICT = {
     ATFC.VAD: ('VAD', VADInfo),
     ATFC.SpeechRec: ('SpeechRec', SpeechInfo),
     ATFC.SSL: ('SSL', SSLInfo),
-    ATFC.Gender: ('Gender', GenderInfo),
-    ATFC.Emotion: ('Emotion', EmotionInfo),
-    ATFC.VoiceId: ('VoiceId', VoiceIdInfo)
+    ATFC.Gender: ('gender', GenderInfo),
+    ATFC.Emotion: ('emotion', EmotionInfo),
+    ATFC.VoiceId: ('voiceId', VoiceIdInfo)
 }
 
 
@@ -69,27 +69,27 @@ def _table_creation(cursor):
 
 
     create_emotion = """
-    CREATE TABLE Emotion ( 
-    Emotion_key INTEGER PRIMARY KEY,
-    Emotion VARCHAR(20),
+    CREATE TABLE emotion ( 
+    emotion_key INTEGER PRIMARY KEY,
+    emotion VARCHAR(20),
     probability REAL,
     time_from TEXT,
     time_to TEXT);"""
 
 
     create_gender = """
-    CREATE TABLE Gender ( 
-    Gender_key INTEGER PRIMARY KEY,
-    Gender VARCHAR(20),
+    CREATE TABLE gender ( 
+    gender_key INTEGER PRIMARY KEY,
+    gender VARCHAR(20),
     probability REAL,
     time_from TEXT,
     time_to TEXT);"""
 
 
     create_voiceID = """
-    CREATE TABLE VoiceID ( 
-    VoiceID_key INTEGER PRIMARY KEY,
-    VoiceID VARCHAR(20),
+    CREATE TABLE voiceId ( 
+    voiceId_key INTEGER PRIMARY KEY,
+    voiceId VARCHAR(20),
     probability REAL,
     time_from TEXT,
     time_to TEXT);"""
