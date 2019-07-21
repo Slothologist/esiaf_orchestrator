@@ -3,7 +3,7 @@ from esiaf_orchestrator.SubMsgSubscriber import SubMsgSubscriber
 import datetime
 from esiaf_ros.msg import SSLInfo, SSLDir, SpeechInfo, SpeechHypothesis, RecordingTimeStamps, GenderInfo, EmotionInfo, \
     VoiceIdInfo
-from esiaf_orchestrator.db_retrieval import get_basic_results, get_speech_rec_results
+from esiaf_orchestrator.db_retrieval import get_basic_results, get_speech_rec_results, get_ssl_results
 
 # setup stuff
 
@@ -42,6 +42,16 @@ speech_msg.hypotheses = []
 speech_msg.hypotheses.append(SpeechHypothesis())
 speech_msg.hypotheses[0].recognizedSpeech = 'hello robot'
 speech_msg.hypotheses[0].probability = 0.6
+
+
+ssl_msg = SSLInfo()
+ssl_msg.duration = time_stamps
+ssl_msg.directions = []
+ssl_msg.directions.append(SSLDir())
+ssl_msg.directions[0].sourceId = 'source 1'
+ssl_msg.directions[0].angleVertical = 0.5
+ssl_msg.directions[0].angleHorizontal = 0.4
+
 
 subscriber = SubMsgSubscriber('bla', 'blubb', db_path)
 
@@ -94,4 +104,14 @@ subscriber._write_speech_to_db(speech_msg)
 
 # read
 retrieved = get_speech_rec_results(time_one, time_two, db_path)
+assert retrieved[0] == speech_msg
+
+#### ssl tests
+
+# write
+subscriber._write_ssl_to_db(ssl_msg)
+
+# read
+retrieved = get_ssl_results(time_one, time_two, db_path)
+assert retrieved[0] == ssl_msg
 

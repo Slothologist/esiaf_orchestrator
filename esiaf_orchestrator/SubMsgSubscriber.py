@@ -118,19 +118,19 @@ class SubMsgSubscriber:
 
         # prepare main entry commands
         ssl_dir_command = """
-        INSERT INTO ssl_dir (dir_key, sourceId, angleVertical, angleHorizontal, probability)
+        INSERT INTO ssl_dir (dir_key, sourceId, angleVertical, angleHorizontal)
         VALUES 
-        (NULL, {sourceId}, {angleVertical}, {angleHorizontal}, {probability});
+        (NULL, "{sourceId}", "{angleVertical}", "{angleHorizontal}");
         """
 
         ssl_command = """
         INSERT INTO ssl (ssl_key, time_from, time_to)
-        VALUES (NULL, {time_from}, {time_to});
+        VALUES (NULL, "{time_from}", "{time_to}");
         """
 
         ssl_combo_command = """
         INSERT INTO ssl_combo (combo_key, ssl_key, dir_key)
-        VALUES (NULL, {ssl}, {dir});
+        VALUES (NULL, "{ssl}", "{dir}");
         """
 
         # write all directions
@@ -138,8 +138,7 @@ class SubMsgSubscriber:
         for dir in msg.directions:
             cursor.execute(ssl_dir_command.format(sourceId=dir.sourceId,
                                                   angleVertical=dir.angleVertical,
-                                                  angleHorizontal=dir.angleHorizontal,
-                                                  probability=dir.probability))
+                                                  angleHorizontal=dir.angleHorizontal))
             dir_ids.append(cursor.lastrowid)
 
         # write the main ssl entry
@@ -149,7 +148,7 @@ class SubMsgSubscriber:
 
         # write the compound entries
         for dir in dir_ids:
-            cursor.execute(ssl_combo_command.format(ssl=ssl_key, dir_key=dir))
+            cursor.execute(ssl_combo_command.format(ssl=ssl_key, dir=dir))
 
         connection.commit()
         connection.close()

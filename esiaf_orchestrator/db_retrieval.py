@@ -61,9 +61,9 @@ def get_ssl_results(start_time, finish_time, path):
     LEFT JOIN ssl_combo ON ssl.ssl_key = ssl_combo.ssl_key
     LEFT JOIN ssl_dir ON ssl_dir.dir_key = ssl_combo.dir_key
     WHERE 
-      time_from BETWEEN {time_from} AND {time_to}
+      time_from BETWEEN "{time_from}" AND "{time_to}"
       OR
-      time_to BETWEEN {time_from} AND {time_to};
+      time_to BETWEEN "{time_from}" AND "{time_to}";
     """.format(time_from=start_time_string, time_to=finish_time_string)
 
     connection = sqlite3.connect(path)
@@ -93,7 +93,6 @@ def get_ssl_results(start_time, finish_time, path):
         sslDir.sourceId = entry[3]
         sslDir.angleVertical = entry[4]
         sslDir.angleHorizontal = entry[5]
-        sslDir.probability = entry[6]
         ssl_results[ssl_key].directions.append(sslDir)
 
     return [ssl_results[x] for x in ssl_results]
