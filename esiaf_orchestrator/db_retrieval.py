@@ -3,7 +3,16 @@ from db_utils import ros_time_to_sqlite_time, sqlite_time_to_ros_time, DESIGNATI
 from esiaf_ros.msg import SSLInfo, SSLDir, SpeechInfo, SpeechHypothesis, RecordingTimeStamps
 
 
-def get_basic_results(type_name, start_time, finish_time, path):
+def get_results(type_name, start_time, finish_time, path):
+    if type_name == 'SSL':
+        return _get_ssl_results(start_time, finish_time, path)
+    elif type_name == 'SpeechRec':
+        return _get_speech_rec_results(start_time, finish_time, path)
+    else:
+        return _get_basic_results(type_name, start_time, finish_time, path)
+
+
+def _get_basic_results(type_name, start_time, finish_time, path):
 
     if type_name not in [DESIGNATION_DICT[x][0] for x in DESIGNATION_DICT if DESIGNATION_DICT[x][0] not in ['VAD', 'SSL', 'SpeechRec']]:
         raise Exception('Type "' + type_name + '" not supported to retrieve!')
@@ -50,7 +59,7 @@ def get_basic_results(type_name, start_time, finish_time, path):
     return ros_type_list
 
 
-def get_ssl_results(start_time, finish_time, path):
+def _get_ssl_results(start_time, finish_time, path):
     start_time_string = ros_time_to_sqlite_time(start_time)
     finish_time_string = ros_time_to_sqlite_time(finish_time)
 
@@ -98,7 +107,7 @@ def get_ssl_results(start_time, finish_time, path):
     return [ssl_results[x] for x in ssl_results]
 
 
-def get_speech_rec_results(start_time, finish_time, path):
+def _get_speech_rec_results(start_time, finish_time, path):
     start_time_string = ros_time_to_sqlite_time(start_time)
     finish_time_string = ros_time_to_sqlite_time(finish_time)
 

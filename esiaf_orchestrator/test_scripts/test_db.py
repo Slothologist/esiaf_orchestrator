@@ -3,7 +3,7 @@ from esiaf_orchestrator.SubMsgSubscriber import SubMsgSubscriber
 import datetime
 from esiaf_ros.msg import SSLInfo, SSLDir, SpeechInfo, SpeechHypothesis, RecordingTimeStamps, GenderInfo, EmotionInfo, \
     VoiceIdInfo
-from esiaf_orchestrator.db_retrieval import get_basic_results, get_speech_rec_results, get_ssl_results
+from esiaf_orchestrator.db_retrieval import _get_basic_results, _get_speech_rec_results, _get_ssl_results
 
 # setup stuff
 
@@ -69,7 +69,7 @@ dict = {'gender': msg.gender,
 subscriber._simple_write_to_db(dict, 'gender')
 
 # gender test read
-retrieved = get_basic_results('gender', time_one, time_two, db_path)
+retrieved = _get_basic_results('gender', time_one, time_two, db_path)
 assert retrieved[0] == msg
 
 # emotion test write
@@ -81,7 +81,7 @@ dict = {'emotion': msg.emotion,
 subscriber._simple_write_to_db(dict, 'emotion')
 
 # emotion test read
-retrieved = get_basic_results('emotion', time_one, time_two, db_path)
+retrieved = _get_basic_results('emotion', time_one, time_two, db_path)
 assert retrieved[0] == msg
 
 # voiceId test write
@@ -93,7 +93,7 @@ dict = {'voiceId': msg.voiceId,
 subscriber._simple_write_to_db(dict, 'voiceId')
 
 # voiceId test read
-retrieved = get_basic_results('voiceId', time_one, time_two, db_path)
+retrieved = _get_basic_results('voiceId', time_one, time_two, db_path)
 assert retrieved[0] == msg
 
 
@@ -103,7 +103,7 @@ assert retrieved[0] == msg
 subscriber._write_speech_to_db(speech_msg)
 
 # read
-retrieved = get_speech_rec_results(time_one, time_two, db_path)
+retrieved = _get_speech_rec_results(time_one, time_two, db_path)
 assert retrieved[0] == speech_msg
 
 #### ssl tests
@@ -112,6 +112,7 @@ assert retrieved[0] == speech_msg
 subscriber._write_ssl_to_db(ssl_msg)
 
 # read
-retrieved = get_ssl_results(time_one, time_two, db_path)
+retrieved = _get_ssl_results(time_one, time_two, db_path)
 assert retrieved[0] == ssl_msg
 
+print('Tests passed')
