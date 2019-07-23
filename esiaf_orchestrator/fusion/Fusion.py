@@ -29,7 +29,7 @@ class Fusion:
         basic_designations = [x for x in self.designations if x not in ['VAD', self.anchortype]]
         for designation in basic_designations:
             type_name = DESIGNATION_DICT[designation][0]
-            self.information[type_name] = get_results(type_name, self.duration.start, self.duration.finish, self.db_path)
+            self.information[type_name], _ = get_results(type_name, self.duration.start, self.duration.finish, self.db_path)
 
     def create_esiaf_ros_msg(self):
         msg = EsiafRosMsg()

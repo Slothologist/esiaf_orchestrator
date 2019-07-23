@@ -34,35 +34,40 @@ class SubMsgSubscriber:
             dict = {'gender': msg.gender,
                     'probability': msg.probability,
                     'from': ros_time_to_sqlite_time(msg.duration.start),
-                    'to': ros_time_to_sqlite_time(msg.duration.finish)}
+                    'to': ros_time_to_sqlite_time(msg.duration.finish),
+                    'latency': int(str(rospy.get_rostime() - msg.duration.finish))}
             self._simple_write_to_db(dict, 'gender')
         elif self.designation == ATFC.Emotion:
             dict = {'emotion': msg.emotion,
                     'probability': msg.probability,
                     'from': ros_time_to_sqlite_time(msg.duration.start),
-                    'to': ros_time_to_sqlite_time(msg.duration.finish)}
+                    'to': ros_time_to_sqlite_time(msg.duration.finish),
+                    'latency': int(str(rospy.get_rostime() - msg.duration.finish))}
             self._simple_write_to_db(dict, 'emotion')
         elif self.designation == ATFC.VoiceId:
             dict = {'voiceId': msg.voiceId,
                     'probability': msg.probability,
                     'from': ros_time_to_sqlite_time(msg.duration.start),
-                    'to': ros_time_to_sqlite_time(msg.duration.finish)}
+                    'to': ros_time_to_sqlite_time(msg.duration.finish),
+                    'latency': int(str(rospy.get_rostime() - msg.duration.finish))}
             self._simple_write_to_db(dict, 'voiceId')
 
     def _simple_write_to_db(self, object_dict, type):
         sql_command = """
-              INSERT INTO {type} ({type}_key, {type}, probability, time_from, time_to)
+              INSERT INTO {type} ({type}_key, {type}, probability, time_from, time_to, latency)
               VALUES 
                     (NULL,
                     "{value}", 
                     "{prob}", 
                     "{time_from}", 
-                    "{time_to}");
+                    "{time_to}",
+                    "{latency}");
                     """.format(type=type,
                                value=object_dict[type],
                                prob=object_dict['probability'],
                                time_from=object_dict['from'],
-                               time_to=object_dict['to']
+                               time_to=object_dict['to'],
+                               latency=object_dict['latency']
                                )
 
         connection = sqlite3.connect(self.db_path)
@@ -84,8 +89,8 @@ class SubMsgSubscriber:
         (NULL, "{recognizedSpeech}", "{probability}");
         """
         speech_command = """
-        INSERT INTO speech (speech_key, time_from, time_to)
-        VALUES (NULL, "{time_from}", "{time_to}");
+        INSERT INTO speech (speech_key, time_from, time_to, latency)
+        VALUES (NULL, "{time_from}", "{time_to}", "{latency}");
         """
 
         speech_combo_command = """
@@ -102,7 +107,8 @@ class SubMsgSubscriber:
 
         # write the main speech entry
         cursor.execute(speech_command.format(time_from=ros_time_to_sqlite_time(msg.duration.start),
-                                             time_to=ros_time_to_sqlite_time(msg.duration.finish)))
+                                             time_to=ros_time_to_sqlite_time(msg.duration.finish),
+                                             latency=int(str(rospy.get_rostime() - msg.duration.finish))))
         speech_key = cursor.lastrowid
 
         # write the compound entries
@@ -124,8 +130,8 @@ class SubMsgSubscriber:
         """
 
         ssl_command = """
-        INSERT INTO ssl (ssl_key, time_from, time_to)
-        VALUES (NULL, "{time_from}", "{time_to}");
+        INSERT INTO ssl (ssl_key, time_from, time_to, latency)
+        VALUES (NULL, "{time_from}", "{time_to}", "{latency}");
         """
 
         ssl_combo_command = """
@@ -143,7 +149,8 @@ class SubMsgSubscriber:
 
         # write the main ssl entry
         cursor.execute(ssl_command.format(time_from=ros_time_to_sqlite_time(msg.duration.start),
-                                          time_to=ros_time_to_sqlite_time(msg.duration.finish)))
+                                          time_to=ros_time_to_sqlite_time(msg.duration.finish),
+                                          latency=int(str(rospy.get_rostime() - msg.duration.finish))))
         ssl_key = cursor.lastrowid
 
         # write the compound entries

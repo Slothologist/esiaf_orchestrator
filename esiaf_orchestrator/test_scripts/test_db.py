@@ -1,11 +1,18 @@
-from esiaf_orchestrator.db_utils import create_db, sqlite_time_to_ros_time, ros_time_to_sqlite_time
+from esiaf_orchestrator.db_utils import create_db, sqlite_time_to_ros_time, ros_time_to_sqlite_time, integer_to_ros_duration
 from esiaf_orchestrator.SubMsgSubscriber import SubMsgSubscriber
 import datetime
 from esiaf_ros.msg import SSLInfo, SSLDir, SpeechInfo, SpeechHypothesis, RecordingTimeStamps, GenderInfo, EmotionInfo, \
     VoiceIdInfo
 from esiaf_orchestrator.db_retrieval import _get_basic_results, _get_speech_rec_results, _get_ssl_results
+import rospy
 
 # setup stuff
+
+rospy.init_node('testnode')
+
+dur = rospy.Duration(5)
+dur2 = integer_to_ros_duration(int(str(dur)))
+assert dur == dur2
 
 db_path = 'database.db'
 
@@ -65,11 +72,12 @@ msg = gender_msg
 dict = {'gender': msg.gender,
         'probability': msg.probability,
         'from': ros_time_to_sqlite_time(msg.duration.start),
-        'to': ros_time_to_sqlite_time(msg.duration.finish)}
+        'to': ros_time_to_sqlite_time(msg.duration.finish),
+        'latency': int(str(rospy.get_rostime() - msg.duration.finish))}
 subscriber._simple_write_to_db(dict, 'gender')
 
 # gender test read
-retrieved = _get_basic_results('gender', time_one, time_two, db_path)
+retrieved, latency = _get_basic_results('gender', time_one, time_two, db_path)
 assert retrieved[0] == msg
 
 # emotion test write
@@ -77,11 +85,12 @@ msg = emotion_msg
 dict = {'emotion': msg.emotion,
         'probability': msg.probability,
         'from': ros_time_to_sqlite_time(msg.duration.start),
-        'to': ros_time_to_sqlite_time(msg.duration.finish)}
+        'to': ros_time_to_sqlite_time(msg.duration.finish),
+        'latency': int(str(rospy.get_rostime() - msg.duration.finish))}
 subscriber._simple_write_to_db(dict, 'emotion')
 
 # emotion test read
-retrieved = _get_basic_results('emotion', time_one, time_two, db_path)
+retrieved, latency = _get_basic_results('emotion', time_one, time_two, db_path)
 assert retrieved[0] == msg
 
 # voiceId test write
@@ -89,11 +98,12 @@ msg = voice_msg
 dict = {'voiceId': msg.voiceId,
         'probability': msg.probability,
         'from': ros_time_to_sqlite_time(msg.duration.start),
-        'to': ros_time_to_sqlite_time(msg.duration.finish)}
+        'to': ros_time_to_sqlite_time(msg.duration.finish),
+        'latency': int(str(rospy.get_rostime() - msg.duration.finish))}
 subscriber._simple_write_to_db(dict, 'voiceId')
 
 # voiceId test read
-retrieved = _get_basic_results('voiceId', time_one, time_two, db_path)
+retrieved, latency = _get_basic_results('voiceId', time_one, time_two, db_path)
 assert retrieved[0] == msg
 
 
@@ -103,7 +113,7 @@ assert retrieved[0] == msg
 subscriber._write_speech_to_db(speech_msg)
 
 # read
-retrieved = _get_speech_rec_results(time_one, time_two, db_path)
+retrieved, latency = _get_speech_rec_results(time_one, time_two, db_path)
 assert retrieved[0] == speech_msg
 
 #### ssl tests
@@ -112,7 +122,7 @@ assert retrieved[0] == speech_msg
 subscriber._write_ssl_to_db(ssl_msg)
 
 # read
-retrieved = _get_ssl_results(time_one, time_two, db_path)
+retrieved, latency = _get_ssl_results(time_one, time_two, db_path)
 assert retrieved[0] == ssl_msg
 
 print('Tests passed')

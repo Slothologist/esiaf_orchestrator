@@ -18,6 +18,10 @@ DESIGNATION_DICT = {
 }
 
 
+def integer_to_ros_duration(integer):
+    return rospy.Duration(integer // int(1e9), integer % int(1e9))
+
+
 def ros_time_to_sqlite_time(ros_time):
     return dt.fromtimestamp(ros_time.to_sec())
 
@@ -53,7 +57,8 @@ def _table_creation(cursor):
     CREATE TABLE speech ( 
     speech_key INTEGER PRIMARY KEY,
     time_from TEXT,
-    time_to TEXT);"""
+    time_to TEXT,
+    latency INTEGER);"""
 
     create_speech_hypo = """
     CREATE TABLE speech_hypo ( 
@@ -74,7 +79,8 @@ def _table_creation(cursor):
     emotion VARCHAR(20),
     probability REAL,
     time_from TEXT,
-    time_to TEXT);"""
+    time_to TEXT,
+    latency INTEGER);"""
 
 
     create_gender = """
@@ -83,7 +89,8 @@ def _table_creation(cursor):
     gender VARCHAR(20),
     probability REAL,
     time_from TEXT,
-    time_to TEXT);"""
+    time_to TEXT,
+    latency INTEGER);"""
 
 
     create_voiceID = """
@@ -92,14 +99,16 @@ def _table_creation(cursor):
     voiceId VARCHAR(20),
     probability REAL,
     time_from TEXT,
-    time_to TEXT);"""
+    time_to TEXT,
+    latency INTEGER);"""
 
 
     create_ssl = """
     CREATE TABLE ssl (
     ssl_key INTEGER PRIMARY KEY,
     time_from TEXT,
-    time_to TEXT);"""
+    time_to TEXT,
+    latency INTEGER);"""
 
     create_ssl_dir = """
     CREATE TABLE ssl_dir ( 

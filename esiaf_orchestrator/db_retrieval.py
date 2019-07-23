@@ -1,5 +1,5 @@
 import sqlite3
-from db_utils import ros_time_to_sqlite_time, sqlite_time_to_ros_time, DESIGNATION_DICT
+from db_utils import ros_time_to_sqlite_time, sqlite_time_to_ros_time, integer_to_ros_duration, DESIGNATION_DICT
 from esiaf_ros.msg import SSLInfo, SSLDir, SpeechInfo, SpeechHypothesis, RecordingTimeStamps
 
 
@@ -22,7 +22,7 @@ def _get_basic_results(type_name, start_time, finish_time, path):
     # query all elements of type in question
 
     sql_query = """
-    SELECT {type}, probability, time_from, time_to FROM {type}
+    SELECT {type}, probability, time_from, time_to, AVG(latency) FROM {type}
     WHERE 
       time_from BETWEEN "{time_from}" AND "{time_to}"
       OR
@@ -56,7 +56,9 @@ def _get_basic_results(type_name, start_time, finish_time, path):
         type_instance.duration.finish = sqlite_time_to_ros_time(instance[3])
         ros_type_list.append(type_instance)
 
-    return ros_type_list
+    latency = integer_to_ros_duration(int(result_raw[0][4]))
+
+    return ros_type_list, latency
 
 
 def _get_ssl_results(start_time, finish_time, path):
@@ -65,7 +67,7 @@ def _get_ssl_results(start_time, finish_time, path):
 
     # query all elements of type in question
     sql_query = """
-    SELECT ssl.ssl_key, time_from, time_to, sourceId, angleVertical, angleHorizontal, probability FROM 
+    SELECT ssl.ssl_key, time_from, time_to, sourceId, angleVertical, angleHorizontal, AVG(DISTINCT latency) FROM 
     ssl 
     LEFT JOIN ssl_combo ON ssl.ssl_key = ssl_combo.ssl_key
     LEFT JOIN ssl_dir ON ssl_dir.dir_key = ssl_combo.dir_key
@@ -104,7 +106,9 @@ def _get_ssl_results(start_time, finish_time, path):
         sslDir.angleHorizontal = entry[5]
         ssl_results[ssl_key].directions.append(sslDir)
 
-    return [ssl_results[x] for x in ssl_results]
+    latency = integer_to_ros_duration(int(result_raw[0][6]))
+
+    return [ssl_results[x] for x in ssl_results], latency
 
 
 def _get_speech_rec_results(start_time, finish_time, path):
@@ -113,7 +117,7 @@ def _get_speech_rec_results(start_time, finish_time, path):
 
     # query all elements of type in question
     sql_query = """
-        SELECT speech.speech_key, time_from, time_to, recognizedSpeech, probability FROM 
+        SELECT speech.speech_key, time_from, time_to, recognizedSpeech, probability, AVG(DISTINCT latency) FROM 
         speech 
         LEFT JOIN speech_combo ON speech.speech_key = speech_combo.speech_key
         LEFT JOIN speech_hypo ON speech_hypo.hypo_key = speech_combo.hypo_key
@@ -151,4 +155,6 @@ def _get_speech_rec_results(start_time, finish_time, path):
         speech_hyp.probability = entry[4]
         speech_results[speech_key].hypotheses.append(speech_hyp)
 
-    return [speech_results[x] for x in speech_results]
+    latency = integer_to_ros_duration(int(result_raw[0][5]))
+
+    return [speech_results[x] for x in speech_results], latency
