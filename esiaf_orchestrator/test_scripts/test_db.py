@@ -65,6 +65,14 @@ subscriber = SubMsgSubscriber('bla', 'blubb', db_path)
 
 ################### test stuff
 
+# test read before write
+
+retrieved, latency = _get_basic_results('gender', time_one, time_two, db_path)
+retrieved, latency = _get_basic_results('emotion', time_one, time_two, db_path)
+retrieved, latency = _get_basic_results('voiceId', time_one, time_two, db_path)
+retrieved, latency = _get_speech_rec_results(time_one, time_two, db_path)
+retrieved, latency = _get_ssl_results(time_one, time_two, db_path)
+
 #### basic stuff test
 
 # gender test write

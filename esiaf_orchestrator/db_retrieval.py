@@ -44,6 +44,10 @@ def _get_basic_results(type_name, start_time, finish_time, path):
         if DESIGNATION_DICT[designation][0] == type_name:
             type_class = DESIGNATION_DICT[designation][1]
 
+    # edge case: no entry yet
+    if len(result_raw) == 1 and not [x for x in result_raw[0] if x is not None]:
+        return [], 0
+
     # iterate over all retrieved instances
     ros_type_list = []
     for instance in result_raw:
@@ -85,6 +89,10 @@ def _get_ssl_results(start_time, finish_time, path):
 
     connection.commit()
     connection.close()
+
+    # edge case: no entry yet
+    if len(result_raw) == 1 and not [x for x in result_raw[0] if x is not None]:
+        return [], 0
 
     # recreate ros type instances
     ssl_results = {}
@@ -135,6 +143,10 @@ def _get_speech_rec_results(start_time, finish_time, path):
 
     connection.commit()
     connection.close()
+
+    # edge case: no entry yet
+    if len(result_raw) == 1 and not [x for x in result_raw[0] if x is not None]:
+        return [], 0
 
     # recreate ros type instances
     speech_results = {}
