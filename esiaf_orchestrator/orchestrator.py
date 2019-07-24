@@ -30,7 +30,8 @@ class Orchestrator:
     def __init__(self,
                  db_path,
                  remove_dead_rate=0.2,
-                 resampling_strategy='minimise_network_traffic'
+                 resampling_strategy='minimise_network_traffic',
+                 fusion_check_rate=0.2
                  ):
         """
         Will initialise an orchestrator according to the config file found under the given path.
@@ -41,6 +42,7 @@ class Orchestrator:
         self.resampling_strategy = resampling_strategy
         self.db_path = db_path
         self.stopping_signal = False
+        self.fusion_check_rate = fusion_check_rate
         self.registerService = rospy.Service('/esiaf_ros/orchestrator/register', RegisterNode, self.register_node)
 
         # define loop function for removing dead nodes and start a thread calling it every X seconds

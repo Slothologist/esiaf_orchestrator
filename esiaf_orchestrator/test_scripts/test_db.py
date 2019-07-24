@@ -1,4 +1,4 @@
-from esiaf_orchestrator.db_utils import create_db, sqlite_time_to_ros_time, ros_time_to_sqlite_time, integer_to_ros_duration
+from esiaf_orchestrator.db_utils import db_startup, sqlite_time_to_ros_time, ros_time_to_sqlite_time, integer_to_ros_duration
 from esiaf_orchestrator.SubMsgSubscriber import SubMsgSubscriber
 import datetime
 from esiaf_ros.msg import SSLInfo, SSLDir, SpeechInfo, SpeechHypothesis, RecordingTimeStamps, GenderInfo, EmotionInfo, \
@@ -26,7 +26,7 @@ time_stamps = RecordingTimeStamps()
 time_stamps.start = time_one
 time_stamps.finish = time_two
 
-create_db(db_path)
+db_startup(db_path, True)
 
 gender_msg = GenderInfo()
 gender_msg.gender = 'male'

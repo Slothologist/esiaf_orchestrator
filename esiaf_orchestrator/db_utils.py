@@ -43,10 +43,13 @@ def create_db(path):
     connection.close()
 
 
-def db_startup(path):
+def db_startup(path, clean):
     # remove old file if it exists
     if os.path.exists(path) and os.path.isfile(path):
-        os.remove(path)
+        if clean:
+            os.remove(path)
+        else:
+            return
     # create new db in place
     create_db(path)
 
