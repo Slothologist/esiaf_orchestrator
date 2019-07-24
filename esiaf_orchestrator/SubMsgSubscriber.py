@@ -15,15 +15,20 @@ class SubMsgSubscriber:
     def __init__(self,
                  name,
                  designation,
-                 db_path):
+                 db_path,
+                 meta_fusions):
         self.designation = designation
         self.db_path = db_path
+        self.meta_fusions = meta_fusions
         if designation in DESIGNATION_DICT:
             self.subscriber = rospy.Subscriber(name + '/' + DESIGNATION_DICT[designation][0],
                                                DESIGNATION_DICT[designation][1],
                                                self.callback)
 
     def callback(self, msg):
+        for meta_fusion in self.meta_fusions:
+            meta_fusion.add_info(self.designation, msg)
+
         if self.designation == ATFC.VAD:
             pass
         elif self.designation == ATFC.SpeechRec:

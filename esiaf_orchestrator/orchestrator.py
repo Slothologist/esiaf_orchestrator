@@ -5,7 +5,6 @@ import rospy
 # esiaf imports
 from esiaf_ros.msg import *
 from esiaf_ros.srv import *
-import pyesiaf
 
 # threading imports
 import threading
@@ -15,7 +14,8 @@ import sys
 
 # util imports
 from .node import Node
-from .AudioInfo import AudioFormat as AudioFormatInternal, AudioTopicInfo
+from fusion.MetaFusion import MetaFusion
+from db_utils import DESIGNATION_DICT
 import utils
 
 
@@ -29,6 +29,7 @@ class Orchestrator:
 
     def __init__(self,
                  db_path,
+                 meta_fusion_config,
                  remove_dead_rate=0.2,
                  resampling_strategy='minimise_network_traffic',
                  fusion_check_rate=0.2
@@ -42,7 +43,7 @@ class Orchestrator:
         self.resampling_strategy = resampling_strategy
         self.db_path = db_path
         self.stopping_signal = False
-        self.fusion_check_rate = fusion_check_rate
+        self.meta_fusions = self.generate_metafusions_from_config(meta_fusion_config, db_path, fusion_check_rate)
         self.registerService = rospy.Service('/esiaf_ros/orchestrator/register', RegisterNode, self.register_node)
 
         # define loop function for removing dead nodes and start a thread calling it every X seconds
@@ -101,7 +102,7 @@ class Orchestrator:
         :param nodeinfo: the ros message containing the registering node's information
         :return: 
         """
-        new_node = Node(nodeinfo, self.db_path)
+        new_node = Node(nodeinfo, self.db_path, self.meta_fusions)
         rospy.loginfo('Registering new node: \n' + str(nodeinfo))
 
         with self.active_nodes_lock:
@@ -178,24 +179,18 @@ class Orchestrator:
             else:
                 node.update_config()
 
-    def check_for_new_data(self):
-        """
-        Checks whether a new message can be send out to outside-of-pipeline subscribers
-        :return: True if a new message can be send out, false otherwise
-        """
-        return self.check_for_new_data_naive()
-
-    ####################################################################################
-    ###
-    ### temporary stuff for testing etc
-    ###
-    ####################################################################################
-
-
-    def check_for_new_data_naive(self):
-        """
-        naive method for mocking checks whether all
-        :return:
-        """
-        with self.active_nodes_lock:
-            return all([x.subMsgSubscriber.last_msgs for x in self.active_nodes])
+    def generate_metafusions_from_config(self, config, db_path, fusion_check_rate):
+        anchor_type_dict = {DESIGNATION_DICT[x][0]: DESIGNATION_DICT[x][1] for x in DESIGNATION_DICT}
+        designation_dict = {DESIGNATION_DICT[x][0]: x for x in DESIGNATION_DICT}
+        meta_fusions = []
+        for each in config:
+            m_fusion_ = config[each]
+            MetaFusion(
+                anchor_type_dict[m_fusion_['anchor_type']],
+                db_path,
+                designation_dict[m_fusion_['designations']],
+                m_fusion_['output_topic'],
+                fusion_check_rate,
+                lambda: self.stopping_signal
+            )
+        return meta_fusions

@@ -37,7 +37,7 @@ class Node:
     actualTopicsIn = None
     actualTopicsOut = None
 
-    def __init__(self, nodeinfo, db_path):
+    def __init__(self, nodeinfo, db_path, meta_fusions):
         self.name = nodeinfo.name
         self.designation = nodeinfo.designation
         self.configPublisher = rospy.Publisher('/esiaf_ros' + self.name + '/changedConfig', ChangedConfig, queue_size=10, latch=True)
@@ -54,7 +54,7 @@ class Node:
         for allowedTopicOut in nodeinfo.outputTopics:
             self.allowedTopicsOut.append(AudioTopicInfo(allowedTopicOut))
 
-        self.subMsgSubscriber = SubMsgSubscriber(self.name, self.designation, db_path)
+        self.subMsgSubscriber = SubMsgSubscriber(self.name, self.designation, db_path, meta_fusions)
 
 
     def update_config(self):
