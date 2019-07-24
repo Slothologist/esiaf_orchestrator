@@ -1,6 +1,6 @@
 import sqlite3
 from db_utils import ros_time_to_sqlite_time, sqlite_time_to_ros_time, integer_to_ros_duration, DESIGNATION_DICT
-from esiaf_ros.msg import SSLInfo, SSLDir, SpeechInfo, SpeechHypothesis, RecordingTimeStamps
+from esiaf_ros.msg import SSLInfo, SSLDir, SpeechInfo, SpeechHypothesis, RecordingTimeStamps, VADInfo
 
 
 def get_results(type_name, start_time, finish_time, path):
@@ -8,6 +8,8 @@ def get_results(type_name, start_time, finish_time, path):
         return _get_ssl_results(start_time, finish_time, path)
     elif type_name == 'SpeechRec':
         return _get_speech_rec_results(start_time, finish_time, path)
+    elif type_name == 'VAD':
+        return _get_vad_results(start_time, finish_time, path)
     else:
         return _get_basic_results(type_name, start_time, finish_time, path)
 
@@ -170,3 +172,43 @@ def _get_speech_rec_results(start_time, finish_time, path):
     latency = integer_to_ros_duration(int(result_raw[0][5]))
 
     return [speech_results[x] for x in speech_results], latency
+
+
+def _get_vad_results(start_time, finish_time, path):
+    start_time_string = ros_time_to_sqlite_time(start_time)
+    finish_time_string = ros_time_to_sqlite_time(finish_time)
+
+    sql_query = """
+    SELECT probability, time_from, time_to, AVG(latency) FROM vad
+    WHERE 
+      time_from BETWEEN "{time_from}" AND "{time_to}"
+      OR
+      time_to BETWEEN "{time_from}" AND "{time_to}";
+    """.format(time_from=start_time_string, time_to=finish_time_string)
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+
+    cursor.execute(sql_query)
+    result_raw = cursor.fetchall()
+
+    connection.commit()
+    connection.close()
+
+    # edge case: no entry yet
+    if len(result_raw) == 1 and not [x for x in result_raw[0] if x is not None]:
+        return [], 0
+
+    # iterate over all retrieved instances
+    ros_type_list = []
+    for instance in result_raw:
+        # create new type and fill it with raw result
+        type_instance = VADInfo()
+        type_instance.probability = instance[0]
+        type_instance.duration = RecordingTimeStamps()
+        type_instance.duration.start = sqlite_time_to_ros_time(instance[1])
+        type_instance.duration.finish = sqlite_time_to_ros_time(instance[2])
+        ros_type_list.append(type_instance)
+
+    latency = integer_to_ros_duration(int(result_raw[0][3]))
+
+    return ros_type_list, latency

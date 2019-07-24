@@ -30,7 +30,7 @@ class SubMsgSubscriber:
             meta_fusion.add_info(self.designation, msg)
 
         if self.designation == ATFC.VAD:
-            pass
+            self._write_vad_to_db(msg)
         elif self.designation == ATFC.SpeechRec:
             self._write_speech_to_db(msg)
         elif self.designation == ATFC.SSL:
@@ -161,6 +161,30 @@ class SubMsgSubscriber:
         # write the compound entries
         for dir in dir_ids:
             cursor.execute(ssl_combo_command.format(ssl=ssl_key, dir=dir))
+
+        connection.commit()
+        connection.close()
+
+    def _write_vad_to_db(self, msg):
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+
+        sql_command = """
+                      INSERT INTO vad (vad_key, probability, time_from, time_to, latency)
+                      VALUES 
+                            (NULL, 
+                            "{prob}", 
+                            "{time_from}", 
+                            "{time_to}",
+                            "{latency}");
+                            """.format(
+                                       prob=msg.probability,
+                                       time_from=ros_time_to_sqlite_time(msg.duration.start),
+                                       time_to=ros_time_to_sqlite_time(msg.duration.finish),
+                                       latency=int(str(rospy.get_rostime() - msg.duration.finish))
+                                       )
+
+        cursor.execute(sql_command)
 
         connection.commit()
         connection.close()

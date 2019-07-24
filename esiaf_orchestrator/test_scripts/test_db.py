@@ -2,8 +2,8 @@ from esiaf_orchestrator.db_utils import db_startup, sqlite_time_to_ros_time, ros
 from esiaf_orchestrator.SubMsgSubscriber import SubMsgSubscriber
 import datetime
 from esiaf_ros.msg import SSLInfo, SSLDir, SpeechInfo, SpeechHypothesis, RecordingTimeStamps, GenderInfo, EmotionInfo, \
-    VoiceIdInfo
-from esiaf_orchestrator.db_retrieval import _get_basic_results, _get_speech_rec_results, _get_ssl_results
+    VoiceIdInfo, VADInfo
+from esiaf_orchestrator.db_retrieval import _get_basic_results, _get_speech_rec_results, _get_ssl_results, _get_vad_results
 import rospy
 
 # setup stuff
@@ -50,7 +50,6 @@ speech_msg.hypotheses.append(SpeechHypothesis())
 speech_msg.hypotheses[0].recognizedSpeech = 'hello robot'
 speech_msg.hypotheses[0].probability = 0.6
 
-
 ssl_msg = SSLInfo()
 ssl_msg.duration = time_stamps
 ssl_msg.directions = []
@@ -59,8 +58,13 @@ ssl_msg.directions[0].sourceId = 'source 1'
 ssl_msg.directions[0].angleVertical = 0.5
 ssl_msg.directions[0].angleHorizontal = 0.4
 
+vad_msg = VADInfo()
+vad_msg.probability = 0.3
+vad_msg.duration = time_stamps
 
-subscriber = SubMsgSubscriber('bla', 'blubb', db_path)
+
+
+subscriber = SubMsgSubscriber('bla', 'blubb', db_path, [])
 
 
 ################### test stuff
@@ -68,10 +72,17 @@ subscriber = SubMsgSubscriber('bla', 'blubb', db_path)
 # test read before write
 
 retrieved, latency = _get_basic_results('gender', time_one, time_two, db_path)
+assert (retrieved, latency) == ([], 0)
 retrieved, latency = _get_basic_results('emotion', time_one, time_two, db_path)
+assert (retrieved, latency) == ([], 0)
 retrieved, latency = _get_basic_results('voiceId', time_one, time_two, db_path)
+assert (retrieved, latency) == ([], 0)
 retrieved, latency = _get_speech_rec_results(time_one, time_two, db_path)
+assert (retrieved, latency) == ([], 0)
 retrieved, latency = _get_ssl_results(time_one, time_two, db_path)
+assert (retrieved, latency) == ([], 0)
+retrieved, latency = _get_vad_results(time_one, time_two, db_path)
+assert (retrieved, latency) == ([], 0)
 
 #### basic stuff test
 
@@ -132,5 +143,14 @@ subscriber._write_ssl_to_db(ssl_msg)
 # read
 retrieved, latency = _get_ssl_results(time_one, time_two, db_path)
 assert retrieved[0] == ssl_msg
+
+#### vad tests
+
+#write
+subscriber._write_vad_to_db(vad_msg)
+
+#read
+retrieved, latency = _get_vad_results(time_one, time_two, db_path)
+assert retrieved[0] == vad_msg
 
 print('Tests passed')

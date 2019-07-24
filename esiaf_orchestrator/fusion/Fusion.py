@@ -27,7 +27,7 @@ class Fusion:
         return False
 
     def _gather_already_existing_info(self):
-        basic_designations = [x for x in self.designations if x not in [AudioTopicFormatConstants.VAD, self.anchortype]]
+        basic_designations = [x for x in self.designations if x not in [self.anchortype]]
         for designation in basic_designations:
             type_name = DESIGNATION_DICT[designation][0]
             self.information[type_name], self.latencies[designation] = get_results(type_name, self.duration.start, self.duration.finish, self.db_path)

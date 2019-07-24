@@ -86,6 +86,15 @@ def _table_creation(cursor):
     latency INTEGER);"""
 
 
+    create_vad = """
+    CREATE TABLE vad ( 
+    vad_key INTEGER PRIMARY KEY,
+    probability REAL,
+    time_from TEXT,
+    time_to TEXT,
+    latency INTEGER);"""
+
+
     create_gender = """
     CREATE TABLE gender ( 
     gender_key INTEGER PRIMARY KEY,
@@ -131,6 +140,7 @@ def _table_creation(cursor):
     cursor.execute(create_speech)
     cursor.execute(create_speech_hypo)
     cursor.execute(create_speech_combo)
+    cursor.execute(create_vad)
     cursor.execute(create_emotion)
     cursor.execute(create_gender)
     cursor.execute(create_voiceID)
