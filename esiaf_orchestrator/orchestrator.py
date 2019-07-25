@@ -14,8 +14,8 @@ import sys
 
 # util imports
 from .node import Node
-from fusion.MetaFusion import MetaFusion
-from db_utils import DESIGNATION_DICT
+from esiaf_orchestrator.fusion.MetaFusion import MetaFusion
+from esiaf_orchestrator.db_utils import DESIGNATION_DICT
 import utils
 
 

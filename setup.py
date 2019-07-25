@@ -14,7 +14,7 @@ setup_args = generate_distutils_setup(
         'datetime',
         'sqlite3'
     ],
-    packages=['esiaf_orchestrator']
+    packages=['esiaf_orchestrator', 'esiaf_orchestrator.fusion']
 
 )
 
