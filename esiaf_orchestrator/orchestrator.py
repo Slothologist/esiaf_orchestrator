@@ -188,7 +188,7 @@ class Orchestrator:
             MetaFusion(
                 anchor_type_dict[m_fusion_['anchor_type']],
                 db_path,
-                designation_dict[m_fusion_['designations']],
+                [designation_dict[designation_str] for designation_str in m_fusion_['designations']],
                 m_fusion_['output_topic'],
                 fusion_check_rate,
                 lambda: self.stopping_signal
