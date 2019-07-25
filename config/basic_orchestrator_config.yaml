@@ -5,6 +5,10 @@ resampling_strategy : 'minimise_network_traffic'
 fusion_check_rate: 0.2
 fusions:
     f1:
-        anchortype: 'SpeechRec'
+        anchor_type: 'SpeechRec'
         designations: ['SpeechRec']
         output_topic: '/esiaf_ros/synchronized/speech'
+    f2:
+        anchor_type: 'VAD'
+        designations: ['SpeechRec']
+        output_topic: '/esiaf_ros/synchronized/vad'
