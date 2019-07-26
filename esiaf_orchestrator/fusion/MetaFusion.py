@@ -1,6 +1,7 @@
 from Fusion import Fusion
 import rospy
 from esiaf_ros.msg import EsiafRosMsg
+from esiaf_orchestrator.db_utils import DESIGNATION_DICT
 import threading
 import time
 
@@ -16,25 +17,30 @@ class MetaFusion:
         self.check_rate = check_rate
         self.stopping_signal = stopping_signal
         self.timer = threading.Thread(target=MetaFusion._check_timer, args=(self, self.stopping_signal))
+        rospy.logdebug('Metafusion created, anchor_type: ' + self.anchor_type)
 
     def add_info(self, designation, information):
+        rospy.logdebug('Aquiring new information, info-type: ' + str(type(information)))
         with self.lock:
-            if designation == self.anchor_type:
+            if DESIGNATION_DICT[designation][0] == self.anchor_type:
                 self._create_anchor(information)
+                self._check_fusions()
                 return
 
             for fusion in self.fusions:
-                fusion.new_info(designation, information)
+                fusion.new_info(DESIGNATION_DICT[designation][0], information)
 
             self._check_fusions()
 
     def _create_anchor(self, information):
+        rospy.logdebug('Creating new fusion!')
         self.fusions.append(Fusion(self.designations, information, self.anchor_type, self.db_path))
 
     def _check_timer(self, stop):
         while not stop():
             time.sleep(1/self.check_rate)
             with self.lock:
+                rospy.loginfo('checking fusions')
                 self._check_fusions()
 
     def _check_fusions(self):

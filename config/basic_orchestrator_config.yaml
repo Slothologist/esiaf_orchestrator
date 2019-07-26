@@ -6,7 +6,7 @@ fusion_check_rate: 0.2
 fusions:
     f1:
         anchor_type: 'SpeechRec'
-        designations: ['SpeechRec']
+        designations: ['SpeechRec', 'emotion']
         output_topic: '/esiaf_ros/synchronized/speech'
     f2:
         anchor_type: 'VAD'

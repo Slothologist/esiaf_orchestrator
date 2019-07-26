@@ -103,7 +103,7 @@ class Orchestrator:
         :return: 
         """
         new_node = Node(nodeinfo, self.db_path, self.meta_fusions)
-        rospy.loginfo('Registering new node: \n' + str(nodeinfo))
+        rospy.logdebug('Registering new node: \n' + str(nodeinfo))
 
         with self.active_nodes_lock:
             self.active_nodes.append(new_node)
@@ -147,8 +147,8 @@ class Orchestrator:
             for outtopic in node.allowedTopicsOut:
                 __add_entry(outtopic.topic, node_output=node)
 
-        rospy.loginfo('Topic deps is: ')
-        rospy.loginfo(str(topic_deps))
+        rospy.logdebug('Topic deps is: ')
+        rospy.logdebug(str(topic_deps))
 
         best_format_per_topic = {}
 
@@ -160,8 +160,8 @@ class Orchestrator:
 
             best_format_per_topic[topic] = self.best_format(input_formats, output_formats)
 
-        rospy.loginfo('best format per topic is: ')
-        rospy.loginfo(str(best_format_per_topic))
+        rospy.logdebug('best format per topic is: ')
+        rospy.logdebug(str(best_format_per_topic))
 
         # set the best audio format for each node and topic
         for node in self.active_nodes:
@@ -180,7 +180,7 @@ class Orchestrator:
                 node.update_config()
 
     def generate_metafusions_from_config(self, config, db_path, fusion_check_rate):
-        anchor_type_dict = {DESIGNATION_DICT[x][0]: DESIGNATION_DICT[x][1] for x in DESIGNATION_DICT}
+        anchor_type_dict = {DESIGNATION_DICT[x][0]: DESIGNATION_DICT[x][0] for x in DESIGNATION_DICT}
         designation_dict = {DESIGNATION_DICT[x][0]: x for x in DESIGNATION_DICT}
         meta_fusions = []
         for each in config:

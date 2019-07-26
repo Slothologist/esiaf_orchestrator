@@ -13,6 +13,8 @@ rospy.init_node('testnode')
 dur = rospy.Duration(5)
 dur2 = integer_to_ros_duration(int(str(dur)))
 assert dur == dur2
+dur3 = rospy.Duration(int(str(1.5*dur2)))
+assert type(dur3) == type(dur2)
 
 db_path = 'database.db'
 

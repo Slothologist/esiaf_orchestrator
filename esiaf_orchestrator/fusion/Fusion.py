@@ -7,9 +7,9 @@ from ..db_retrieval import get_results
 class Fusion:
     def __init__(self, designations, anchor, anchortype, db_path):
         self.designations = designations
-        self.information = {anchortype: [anchor]}
-        self.duration = anchor.duration
         self.anchortype = anchortype
+        self.information = {self.anchortype: [anchor]}
+        self.duration = anchor.duration
         self.db_path = db_path
         self.latencies = {}
         self._gather_already_existing_info()
@@ -27,10 +27,9 @@ class Fusion:
         return False
 
     def _gather_already_existing_info(self):
-        basic_designations = [x for x in self.designations if x not in [self.anchortype]]
+        basic_designations = [DESIGNATION_DICT[x][0] for x in self.designations if DESIGNATION_DICT[x][0] not in [self.anchortype]]
         for designation in basic_designations:
-            type_name = DESIGNATION_DICT[designation][0]
-            self.information[type_name], self.latencies[designation] = get_results(type_name, self.duration.start, self.duration.finish, self.db_path)
+            self.information[designation], self.latencies[designation] = get_results(designation, self.duration.start, self.duration.finish, self.db_path)
 
     def create_esiaf_ros_msg(self):
         msg = EsiafRosMsg()
@@ -47,13 +46,15 @@ class Fusion:
         return msg
 
     def check_finished(self):
+        rospy.loginfo('check finished info: ' + str(self.information))
         anchor_end = self.information[self.anchortype][0].duration.finish
         time_since_anchor = rospy.get_rostime() - anchor_end
 
         # time based check
         for each in self.latencies:
             diff = self.latencies[each]
-            if time_since_anchor > 1.5 * diff:
+            diff_threshold = rospy.Duration(int(float(str(1.5*diff))))  # workaround for genpy/ rospy conversion
+            if time_since_anchor > diff_threshold:
                 return True
 
         # check based on latest information

@@ -79,7 +79,7 @@ class Node:
             config.outputTopics.append(determinedConfig)
 
         self.configPublisher.publish(config)
-        rospy.loginfo('Providing new config for "' + self.name + '": ' + str(config))
+        rospy.logdebug('Providing new config for "' + self.name + '": ' + str(config))
 
     def bury(self):
         """
