@@ -185,12 +185,12 @@ class Orchestrator:
         meta_fusions = []
         for each in config:
             m_fusion_ = config[each]
-            MetaFusion(
+            meta_fusions.append(MetaFusion(
                 anchor_type_dict[m_fusion_['anchor_type']],
                 db_path,
                 [designation_dict[designation_str] for designation_str in m_fusion_['designations']],
                 m_fusion_['output_topic'],
                 fusion_check_rate,
                 lambda: self.stopping_signal
-            )
+            ))
         return meta_fusions

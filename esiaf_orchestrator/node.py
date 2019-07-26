@@ -3,7 +3,7 @@ import rospy
 
 # audio info imports
 from .AudioInfo import AudioTopicInfo
-from esiaf_ros.msg import ChangedConfig, AudioTopicFormatConstants as ATFC
+from esiaf_ros.msg import ChangedConfig, AudioTopicFormatConstants as ATFC, AudioTopicInfo as esiaf_ATI
 from .SubMsgSubscriber import SubMsgSubscriber
 
 # util imports
@@ -66,14 +66,14 @@ class Node:
 
         config.inputTopics = []
         for topic in self.actualTopicsIn:
-            determinedConfig = esiaf_ros.msg.AudioTopicInfo()
+            determinedConfig = esiaf_ATI()
             determinedConfig.topic = topic[0]
             determinedConfig.allowedFormat = topic[1].to_ros()
             config.inputTopics.append(determinedConfig)
 
         config.outputTopics = []
         for topic in self.actualTopicsOut:
-            determinedConfig = esiaf_ros.msg.AudioTopicInfo()
+            determinedConfig = esiaf_ATI()
             determinedConfig.topic = topic[0]
             determinedConfig.allowedFormat = topic[1].to_ros()
             config.outputTopics.append(determinedConfig)
@@ -87,6 +87,7 @@ class Node:
         :return:
         """
         self.configPublisher.unregister()
+        self.subMsgSubscriber.bury()
         rospy.loginfo('Node %s has vanished. Removing it from pipeline!' % self.name)
         # self.subMsgSubscriber.subscriber.unregister()
         del self

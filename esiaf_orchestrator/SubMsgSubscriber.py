@@ -21,7 +21,7 @@ class SubMsgSubscriber:
         self.db_path = db_path
         self.meta_fusions = meta_fusions
         if designation in DESIGNATION_DICT:
-            self.subscriber = rospy.Subscriber(name + '/' + DESIGNATION_DICT[designation][0],
+            self.subscriber = rospy.Subscriber(self._fix_name(name) + '/' + DESIGNATION_DICT[designation][0],
                                                DESIGNATION_DICT[designation][1],
                                                self.callback)
 
@@ -188,3 +188,20 @@ class SubMsgSubscriber:
 
         connection.commit()
         connection.close()
+
+    def bury(self):
+        if self.subscriber:
+            self.subscriber.unregister()
+
+    @staticmethod
+    def _fix_name(name):
+        """
+        This method is needed for python nodes, which due to usage of both rospy and roscpp in the esiaf ros library
+        :param name:
+        :return:
+        """
+        fixed_name = name
+        if '_' in name:
+            if not [x for x in name.split('_')[-1] if x not in [str(y) for y in range(10)]]: # check if all characters after the split are numbers
+                fixed_name = '_'.join(name.split('_')[:-1])
+        return fixed_name
