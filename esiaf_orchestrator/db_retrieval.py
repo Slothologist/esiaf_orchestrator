@@ -4,14 +4,34 @@ from esiaf_ros.msg import SSLInfo, SSLDir, SpeechInfo, SpeechHypothesis, Recordi
 
 
 def get_results(type_name, start_time, finish_time, path):
+    type_dict = {'SSL': 'ssl', 'SpeechRec': 'speech', 'VAD': 'vad'}
+    db_table_name = type_name
+    if type_name in type_dict:
+        db_table_name = type_dict[type_name]
+    latency_query = """
+        SELECT AVG(latency) FROM {type};
+        """.format(type=db_table_name)
+
+
+    connection = sqlite3.connect(path)
+    cursor = connection.cursor()
+
+    cursor.execute(latency_query)
+    latency = cursor.fetchone()[0] or 1
+
+    connection.commit()
+    connection.close()
+
+    latency = integer_to_ros_duration(int(latency))
+
     if type_name == 'SSL':
-        return _get_ssl_results(start_time, finish_time, path)
+        return _get_ssl_results(start_time, finish_time, path), latency
     elif type_name == 'SpeechRec':
-        return _get_speech_rec_results(start_time, finish_time, path)
+        return _get_speech_rec_results(start_time, finish_time, path), latency
     elif type_name == 'VAD':
-        return _get_vad_results(start_time, finish_time, path)
+        return _get_vad_results(start_time, finish_time, path), latency
     else:
-        return _get_basic_results(type_name, start_time, finish_time, path)
+        return _get_basic_results(type_name, start_time, finish_time, path), latency
 
 
 def _get_basic_results(type_name, start_time, finish_time, path):
@@ -24,7 +44,7 @@ def _get_basic_results(type_name, start_time, finish_time, path):
     # query all elements of type in question
 
     sql_query = """
-    SELECT {type}, probability, time_from, time_to, AVG(latency) FROM {type}
+    SELECT {type}, probability, time_from, time_to FROM {type}
     WHERE 
       time_from BETWEEN "{time_from}" AND "{time_to}"
       OR
@@ -48,7 +68,7 @@ def _get_basic_results(type_name, start_time, finish_time, path):
 
     # edge case: no entry yet
     if len(result_raw) == 1 and not [x for x in result_raw[0] if x is not None]:
-        return [], 0
+        return []
 
     # iterate over all retrieved instances
     ros_type_list = []
@@ -62,9 +82,7 @@ def _get_basic_results(type_name, start_time, finish_time, path):
         type_instance.duration.finish = sqlite_time_to_ros_time(instance[3])
         ros_type_list.append(type_instance)
 
-    latency = integer_to_ros_duration(int(result_raw[0][4]))
-
-    return ros_type_list, latency
+    return ros_type_list
 
 
 def _get_ssl_results(start_time, finish_time, path):
@@ -73,7 +91,7 @@ def _get_ssl_results(start_time, finish_time, path):
 
     # query all elements of type in question
     sql_query = """
-    SELECT ssl.ssl_key, time_from, time_to, sourceId, angleVertical, angleHorizontal, AVG(DISTINCT latency) FROM 
+    SELECT ssl.ssl_key, time_from, time_to, sourceId, angleVertical, angleHorizontal FROM 
     ssl 
     LEFT JOIN ssl_combo ON ssl.ssl_key = ssl_combo.ssl_key
     LEFT JOIN ssl_dir ON ssl_dir.dir_key = ssl_combo.dir_key
@@ -94,7 +112,7 @@ def _get_ssl_results(start_time, finish_time, path):
 
     # edge case: no entry yet
     if len(result_raw) == 1 and not [x for x in result_raw[0] if x is not None]:
-        return [], 0
+        return []
 
     # recreate ros type instances
     ssl_results = {}
@@ -116,9 +134,7 @@ def _get_ssl_results(start_time, finish_time, path):
         sslDir.angleHorizontal = entry[5]
         ssl_results[ssl_key].directions.append(sslDir)
 
-    latency = integer_to_ros_duration(int(result_raw[0][6]))
-
-    return [ssl_results[x] for x in ssl_results], latency
+    return [ssl_results[x] for x in ssl_results]
 
 
 def _get_speech_rec_results(start_time, finish_time, path):
@@ -127,7 +143,7 @@ def _get_speech_rec_results(start_time, finish_time, path):
 
     # query all elements of type in question
     sql_query = """
-        SELECT speech.speech_key, time_from, time_to, recognizedSpeech, probability, AVG(DISTINCT latency) FROM 
+        SELECT speech.speech_key, time_from, time_to, recognizedSpeech, probability FROM 
         speech 
         LEFT JOIN speech_combo ON speech.speech_key = speech_combo.speech_key
         LEFT JOIN speech_hypo ON speech_hypo.hypo_key = speech_combo.hypo_key
@@ -148,7 +164,7 @@ def _get_speech_rec_results(start_time, finish_time, path):
 
     # edge case: no entry yet
     if len(result_raw) == 1 and not [x for x in result_raw[0] if x is not None]:
-        return [], 0
+        return []
 
     # recreate ros type instances
     speech_results = {}
@@ -169,9 +185,7 @@ def _get_speech_rec_results(start_time, finish_time, path):
         speech_hyp.probability = entry[4]
         speech_results[speech_key].hypotheses.append(speech_hyp)
 
-    latency = integer_to_ros_duration(int(result_raw[0][5]))
-
-    return [speech_results[x] for x in speech_results], latency
+    return [speech_results[x] for x in speech_results]
 
 
 def _get_vad_results(start_time, finish_time, path):
@@ -179,7 +193,7 @@ def _get_vad_results(start_time, finish_time, path):
     finish_time_string = ros_time_to_sqlite_time(finish_time)
 
     sql_query = """
-    SELECT probability, time_from, time_to, AVG(latency) FROM vad
+    SELECT probability, time_from, time_to FROM vad
     WHERE 
       time_from BETWEEN "{time_from}" AND "{time_to}"
       OR
@@ -196,7 +210,7 @@ def _get_vad_results(start_time, finish_time, path):
 
     # edge case: no entry yet
     if len(result_raw) == 1 and not [x for x in result_raw[0] if x is not None]:
-        return [], 0
+        return []
 
     # iterate over all retrieved instances
     ros_type_list = []
@@ -209,6 +223,4 @@ def _get_vad_results(start_time, finish_time, path):
         type_instance.duration.finish = sqlite_time_to_ros_time(instance[2])
         ros_type_list.append(type_instance)
 
-    latency = integer_to_ros_duration(int(result_raw[0][3]))
-
-    return ros_type_list, latency
+    return ros_type_list

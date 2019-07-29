@@ -17,14 +17,17 @@ class MetaFusion:
         self.check_rate = check_rate
         self.stopping_signal = stopping_signal
         self.timer = threading.Thread(target=MetaFusion._check_timer, args=(self, self.stopping_signal))
+        self.timer.start()
         rospy.logdebug('Metafusion created, anchor_type: ' + self.anchor_type)
 
     def add_info(self, designation, information):
         rospy.logdebug('Aquiring new information, info-type: ' + str(type(information)))
+        rospy.logdebug('New last time: ' + str(information.duration.finish))
         with self.lock:
             if DESIGNATION_DICT[designation][0] == self.anchor_type:
                 self._create_anchor(information)
                 self._check_fusions()
+                rospy.logdebug('Last time from anchor: ' + str(information.duration.finish))
                 return
 
             for fusion in self.fusions:
@@ -40,7 +43,7 @@ class MetaFusion:
         while not stop():
             time.sleep(1/self.check_rate)
             with self.lock:
-                rospy.loginfo('checking fusions')
+                rospy.logdebug('Time based fusion check...')
                 self._check_fusions()
 
     def _check_fusions(self):

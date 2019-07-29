@@ -3,7 +3,7 @@ from esiaf_orchestrator.SubMsgSubscriber import SubMsgSubscriber
 import datetime
 from esiaf_ros.msg import SSLInfo, SSLDir, SpeechInfo, SpeechHypothesis, RecordingTimeStamps, GenderInfo, EmotionInfo, \
     VoiceIdInfo, VADInfo
-from esiaf_orchestrator.db_retrieval import _get_basic_results, _get_speech_rec_results, _get_ssl_results, _get_vad_results
+from esiaf_orchestrator.db_retrieval import get_results
 import rospy
 
 # setup stuff
@@ -72,19 +72,20 @@ subscriber = SubMsgSubscriber('bla', 'blubb', db_path, [])
 ################### test stuff
 
 # test read before write
+basic_duration = integer_to_ros_duration(1)
 
-retrieved, latency = _get_basic_results('gender', time_one, time_two, db_path)
-assert (retrieved, latency) == ([], 0)
-retrieved, latency = _get_basic_results('emotion', time_one, time_two, db_path)
-assert (retrieved, latency) == ([], 0)
-retrieved, latency = _get_basic_results('voiceId', time_one, time_two, db_path)
-assert (retrieved, latency) == ([], 0)
-retrieved, latency = _get_speech_rec_results(time_one, time_two, db_path)
-assert (retrieved, latency) == ([], 0)
-retrieved, latency = _get_ssl_results(time_one, time_two, db_path)
-assert (retrieved, latency) == ([], 0)
-retrieved, latency = _get_vad_results(time_one, time_two, db_path)
-assert (retrieved, latency) == ([], 0)
+retrieved, latency = get_results('gender', time_one, time_two, db_path)
+assert (retrieved, latency) == ([], basic_duration)
+retrieved, latency = get_results('emotion', time_one, time_two, db_path)
+assert (retrieved, latency) == ([], basic_duration)
+retrieved, latency = get_results('voiceId', time_one, time_two, db_path)
+assert (retrieved, latency) == ([], basic_duration)
+retrieved, latency = get_results('SpeechRec', time_one, time_two, db_path)
+assert (retrieved, latency) == ([], basic_duration)
+retrieved, latency = get_results('SSL', time_one, time_two, db_path)
+assert (retrieved, latency) == ([], basic_duration)
+retrieved, latency = get_results('VAD', time_one, time_two, db_path)
+assert (retrieved, latency) == ([], basic_duration)
 
 #### basic stuff test
 
@@ -98,7 +99,7 @@ dict = {'gender': msg.gender,
 subscriber._simple_write_to_db(dict, 'gender')
 
 # gender test read
-retrieved, latency = _get_basic_results('gender', time_one, time_two, db_path)
+retrieved, latency = get_results('gender', time_one, time_two, db_path)
 assert retrieved[0] == msg
 
 # emotion test write
@@ -111,7 +112,7 @@ dict = {'emotion': msg.emotion,
 subscriber._simple_write_to_db(dict, 'emotion')
 
 # emotion test read
-retrieved, latency = _get_basic_results('emotion', time_one, time_two, db_path)
+retrieved, latency = get_results('emotion', time_one, time_two, db_path)
 assert retrieved[0] == msg
 
 # voiceId test write
@@ -124,7 +125,7 @@ dict = {'voiceId': msg.voiceId,
 subscriber._simple_write_to_db(dict, 'voiceId')
 
 # voiceId test read
-retrieved, latency = _get_basic_results('voiceId', time_one, time_two, db_path)
+retrieved, latency = get_results('voiceId', time_one, time_two, db_path)
 assert retrieved[0] == msg
 
 
@@ -134,7 +135,7 @@ assert retrieved[0] == msg
 subscriber._write_speech_to_db(speech_msg)
 
 # read
-retrieved, latency = _get_speech_rec_results(time_one, time_two, db_path)
+retrieved, latency = get_results('SpeechRec', time_one, time_two, db_path)
 assert retrieved[0] == speech_msg
 
 #### ssl tests
@@ -143,7 +144,7 @@ assert retrieved[0] == speech_msg
 subscriber._write_ssl_to_db(ssl_msg)
 
 # read
-retrieved, latency = _get_ssl_results(time_one, time_two, db_path)
+retrieved, latency = get_results('SSL', time_one, time_two, db_path)
 assert retrieved[0] == ssl_msg
 
 #### vad tests
@@ -152,7 +153,7 @@ assert retrieved[0] == ssl_msg
 subscriber._write_vad_to_db(vad_msg)
 
 #read
-retrieved, latency = _get_vad_results(time_one, time_two, db_path)
+retrieved, latency = get_results('VAD', time_one, time_two, db_path)
 assert retrieved[0] == vad_msg
 
 print('Tests passed')

@@ -74,6 +74,7 @@ class SubMsgSubscriber:
                                time_to=object_dict['to'],
                                latency=object_dict['latency']
                                )
+        rospy.logdebug('latency while writing to database: ' + str(object_dict['latency']) + ', type: ' + type)
 
         connection = sqlite3.connect(self.db_path)
         cursor = connection.cursor()

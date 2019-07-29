@@ -103,7 +103,7 @@ class Orchestrator:
         :return: 
         """
         new_node = Node(nodeinfo, self.db_path, self.meta_fusions)
-        rospy.logdebug('Registering new node: \n' + str(nodeinfo))
+        rospy.loginfo('Registering new node: \n' + str(nodeinfo.name))
 
         with self.active_nodes_lock:
             self.active_nodes.append(new_node)
@@ -134,7 +134,7 @@ class Orchestrator:
 
         def __get_format_per_topicname(allowedTopics, name):
             for topic in allowedTopics:
-                #rospy.loginfo('allowedtopics has: ' + topic.topic)
+                rospy.logdebug('allowedtopics has: ' + topic.topic)
                 if topic.topic == name:
                     return topic.allowedFormat
 

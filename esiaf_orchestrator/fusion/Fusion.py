@@ -16,13 +16,14 @@ class Fusion:
 
     def new_info(self, designation, information):
         if not self._determine_relevance(information):
+            rospy.logdebug('non relevant information')
             return
         self.information[designation].append(information)
 
     def _determine_relevance(self, information):
-        if information.duration.start < self.duration.start < information.duration.finish:
+        if information.duration.start <= self.duration.start < information.duration.finish:
             return True
-        if information.duration.start < self.duration.finish < information.duration.finish:
+        if information.duration.start < self.duration.finish <= information.duration.finish:
             return True
         return False
 
@@ -46,7 +47,7 @@ class Fusion:
         return msg
 
     def check_finished(self):
-        rospy.loginfo('check finished info: ' + str(self.information))
+        rospy.logdebug('check finished info: ' + str(self.information))
         anchor_end = self.information[self.anchortype][0].duration.finish
         time_since_anchor = rospy.get_rostime() - anchor_end
 
@@ -55,17 +56,18 @@ class Fusion:
             diff = self.latencies[each]
             diff_threshold = rospy.Duration(int(float(str(1.5*diff))))  # workaround for genpy/ rospy conversion
             if time_since_anchor > diff_threshold:
+                rospy.logdebug('time threshold reached, threshold is: ' + str(diff_threshold))
                 return True
 
         # check based on latest information
         for each in self.latencies:
-            type_name = DESIGNATION_DICT[each][0]
-            infos = self.information[type_name]
+            infos = self.information[each]
             lastest_info_after_anchor_end = False
             for info in infos:
                 if info.duration.finish >= anchor_end:
                     lastest_info_after_anchor_end = True
             if not lastest_info_after_anchor_end:
+                rospy.logdebug('missing information: ' + str(each))
                 return False
 
         return True
