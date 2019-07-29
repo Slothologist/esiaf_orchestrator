@@ -51,7 +51,6 @@ class Orchestrator:
             while not stop():
                 Orchestrator.remove_dead_nodes(orc_instance)
                 time.sleep(1 / remove_dead_rate)
-            sys.exit(0)
 
         t = threading.Thread(target=dead_loop, args=(self, lambda: self.stopping_signal))
         t.start()

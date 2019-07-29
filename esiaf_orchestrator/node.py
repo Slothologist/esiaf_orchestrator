@@ -3,22 +3,10 @@ import rospy
 
 # audio info imports
 from .AudioInfo import AudioTopicInfo
-from esiaf_ros.msg import ChangedConfig, AudioTopicFormatConstants as ATFC, AudioTopicInfo as esiaf_ATI
+from esiaf_ros.msg import ChangedConfig, AudioTopicInfo as esiaf_ATI
 from .SubMsgSubscriber import SubMsgSubscriber
+from db_utils import DESIGNATION_DICT
 
-# util imports
-from enum import Enum
-
-
-class Designation(Enum):
-    """Enum that defines the available endian types"""
-    VAD = ATFC.VAD
-    SpeechRec = ATFC.SpeechRec
-    SSL = ATFC.SSL
-    Gender = ATFC.Gender
-    Emotion = ATFC.Emotion
-    VoiceId = ATFC.VoiceId
-    Other = ATFC.Other
 
 
 class Node:
@@ -54,7 +42,8 @@ class Node:
         for allowedTopicOut in nodeinfo.outputTopics:
             self.allowedTopicsOut.append(AudioTopicInfo(allowedTopicOut))
 
-        self.subMsgSubscriber = SubMsgSubscriber(self.name, self.designation, db_path, meta_fusions)
+        if self.designation in DESIGNATION_DICT:
+            self.subMsgSubscriber = SubMsgSubscriber(self.name, self.designation, db_path, meta_fusions)
 
 
     def update_config(self):
@@ -87,9 +76,9 @@ class Node:
         :return:
         """
         self.configPublisher.unregister()
-        self.subMsgSubscriber.bury()
+        if self.subMsgSubscriber:
+            self.subMsgSubscriber.bury()
         rospy.loginfo('Node %s has vanished. Removing it from pipeline!' % self.name)
-        # self.subMsgSubscriber.subscriber.unregister()
         del self
 
     def __str__(self):

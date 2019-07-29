@@ -3,11 +3,10 @@ import rospy
 
 # msg imports
 from esiaf_ros.msg import AudioTopicFormatConstants as ATFC
-from db_utils import DESIGNATION_DICT
 
 # db imports
 import sqlite3
-from db_utils import ros_time_to_sqlite_time
+from db_utils import ros_time_to_sqlite_time, DESIGNATION_DICT
 
 
 class SubMsgSubscriber:
