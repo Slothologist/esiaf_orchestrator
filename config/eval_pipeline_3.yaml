@@ -1,0 +1,10 @@
+db_path: sample.db
+clean_db_on_startup: True
+remove_dead_rate: 0.2
+resampling_strategy : 'minimise_network_traffic'
+fusion_check_rate: 5.0
+fusions:
+    f1:
+        anchor_type: 'SpeechRec'
+        designations: ['SpeechRec', 'gender']
+        output_topic: '/esiaf_ros/synchronized/speech'
