@@ -54,7 +54,7 @@ class Fusion:
         # time based check
         for each in self.latencies:
             diff = self.latencies[each]
-            diff_threshold = rospy.Duration(int(float(str(1.5*diff))))  # workaround for genpy/ rospy conversion
+            diff_threshold = rospy.Duration.from_sec(float(str(1.5*diff))/1e10)  # workaround for genpy/ rospy conversion
             if time_since_anchor > diff_threshold:
                 rospy.logdebug('time threshold reached, threshold is: ' + str(diff_threshold))
                 return True
